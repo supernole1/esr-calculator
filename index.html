@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESR Calculator — Exceptional Scoring Record Check</title>
+<meta name="description" content="Check if your golf round triggers an Exceptional Scoring Record (ESR) under USGA GHIN rules.">
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green-dark: #2d6a4f;
+  --green-mid: #40916c;
+  --green-light: #d8f3dc;
+  --green-bg: #f0faf4;
+  --amber: #f59e0b;
+  --amber-light: #fef3c7;
+  --amber-border: #d97706;
+  --red: #dc2626;
+  --red-light: #fee2e2;
+  --red-border: #b91c1c;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-700: #374151;
+  --gray-900: #111827;
+  --white: #ffffff;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--green-bg);
+  color: var(--gray-900);
+  line-height: 1.5;
+  min-height: 100vh;
+  padding: 0 16px 32px;
+}
+
+/* ===== Layout ===== */
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ===== Header ===== */
+header {
+  text-align: center;
+  padding: 24px 0 8px;
+}
+
+header h1 {
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: var(--green-dark);
+  letter-spacing: -0.02em;
+}
+
+header p {
+  font-size: 0.875rem;
+  color: var(--gray-500);
+  margin-top: 4px;
+}
+
+/* ===== Card ===== */
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-top: 16px;
+}
+
+/* ===== Form ===== */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 4px;
+}
+
+.form-group label .hint {
+  font-weight: 400;
+  color: var(--gray-400);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 8px;
+  background: var(--gray-50);
+  color: var(--gray-900);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.form-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--green-mid);
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.15);
+}
+
+.form-group input.input-error {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.form-group input[readonly] {
+  background: var(--green-light);
+  color: var(--green-dark);
+  font-weight: 600;
+  border-color: var(--green-mid);
+  cursor: default;
+}
+
+.form-group .error-msg {
+  font-size: 0.8125rem;
+  color: var(--red);
+  margin-top: 4px;
+  display: none;
+}
+
+.form-group .error-msg.visible {
+  display: block;
+}
+
+.form-divider {
+  border: none;
+  border-top: 1px solid var(--gray-200);
+  margin: 20px 0;
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-400);
+  margin-bottom: 12px;
+}
+
+/* ===== Search Panel ===== */
+#search-panel {
+  display: none;
+  margin-bottom: 16px;
+}
+
+#search-panel.show {
+  display: block;
+}
+
+#search-input {
+  margin-bottom: 8px;
+}
+
+.search-status {
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+  padding: 4px 0;
+  min-height: 1.5em;
+}
+
+.search-status.error {
+  color: var(--red);
+}
+
+.search-results {
+  list-style: none;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 240px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.search-results:empty {
+  display: none;
+}
+
+.search-results li {
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--gray-100);
+  transition: background 0.1s;
+}
+
+.search-results li:last-child {
+  border-bottom: none;
+}
+
+.search-results li:hover,
+.search-results li:focus {
+  background: var(--green-light);
+}
+
+.search-results li:active {
+  background: #c3edcd;
+}
+
+.search-results .sr-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--gray-900);
+}
+
+.search-results .sr-detail {
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+}
+
+.search-fallback {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--gray-50);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: var(--gray-700);
+  line-height: 1.5;
+}
+
+.search-fallback a {
+  color: var(--green-dark);
+  font-weight: 600;
+}
+
+.search-fallback .id-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.search-fallback .id-row input {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 0.875rem;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 6px;
+  background: var(--white);
+}
+
+.search-fallback .id-row button {
+  padding: 8px 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--white);
+  background: var(--green-dark);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 36px;
+}
+
+/* Loading spinner */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--gray-200);
+  border-top-color: var(--green-dark);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Selected course badge */
+.selected-course {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--green-light);
+  border: 1.5px solid var(--green-mid);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.selected-course .sc-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--green-dark);
+}
+
+.selected-course .sc-detail {
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+}
+
+.selected-course .sc-change {
+  font-size: 0.8125rem;
+  color: var(--green-dark);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 4px;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#selected-course-display {
+  display: none;
+}
+
+#selected-course-display.show {
+  display: flex;
+}
+
+/* ===== Buttons ===== */
+.btn-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 14px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--white);
+  background: var(--green-dark);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  min-height: 48px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.btn-primary:hover { background: #245a42; }
+.btn-primary:active { background: #1e4d38; }
+
+.btn-reset {
+  font-size: 0.9375rem;
+  color: var(--gray-500);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 4px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.btn-reset:hover { color: var(--gray-700); }
+
+/* ===== Result Card ===== */
+#results-section {
+  display: none;
+}
+
+#results-section.show {
+  display: block;
+}
+
+.result-card {
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  margin-top: 20px;
+}
+
+.result-card.no-esr {
+  background: var(--green-light);
+  border: 2px solid var(--green-mid);
+}
+
+.result-card.tier1 {
+  background: var(--amber-light);
+  border: 2px solid var(--amber-border);
+}
+
+.result-card.tier2 {
+  background: var(--red-light);
+  border: 2px solid var(--red-border);
+}
+
+.result-verdict {
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.no-esr .result-verdict { color: var(--green-dark); }
+.tier1 .result-verdict { color: var(--amber-border); }
+.tier2 .result-verdict { color: var(--red-border); }
+
+.result-subtitle {
+  font-size: 0.9375rem;
+  color: var(--gray-700);
+  margin-bottom: 16px;
+}
+
+.result-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.result-stat {
+  text-align: center;
+}
+
+.result-stat .stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.result-stat .stat-label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ===== Reference Table ===== */
+.table-section {
+  margin-top: 20px;
+}
+
+.table-section h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 8px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+thead {
+  background: var(--green-dark);
+  color: var(--white);
+}
+
+th {
+  padding: 10px 8px;
+  font-weight: 600;
+  text-align: center;
+}
+
+th:first-child { text-align: left; padding-left: 12px; }
+
+td {
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+td:first-child { text-align: left; padding-left: 12px; }
+
+tbody tr:last-child td { border-bottom: none; }
+
+tr.row-current {
+  background: var(--green-light);
+  font-weight: 700;
+}
+
+tr.row-tier1 {
+  background: var(--amber-light);
+}
+
+tr.row-tier2 {
+  background: var(--red-light);
+}
+
+tr.row-current.row-tier1 {
+  background: linear-gradient(135deg, var(--amber-light), #fde68a);
+  font-weight: 700;
+}
+
+tr.row-current.row-tier2 {
+  background: linear-gradient(135deg, var(--red-light), #fecaca);
+  font-weight: 700;
+}
+
+.esr-badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1.3;
+}
+
+.esr-badge.badge-none {
+  background: var(--gray-100);
+  color: var(--gray-500);
+}
+
+.esr-badge.badge-tier1 {
+  background: var(--amber);
+  color: var(--white);
+}
+
+.esr-badge.badge-tier2 {
+  background: var(--red);
+  color: var(--white);
+}
+
+/* ===== Footer ===== */
+footer {
+  text-align: center;
+  padding: 24px 0 8px;
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  line-height: 1.6;
+}
+
+footer a {
+  color: var(--gray-500);
+}
+
+/* ===== Animation ===== */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#results-section.show {
+  animation: fadeSlideIn 0.3s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #results-section.show,
+  .spinner {
+    animation: none;
+  }
+}
+
+/* ===== Responsive: wider screens ===== */
+@media (min-width: 600px) {
+  body { padding: 0 24px 48px; }
+  header { padding-top: 40px; }
+  header h1 { font-size: 1.875rem; }
+  .card { padding: 32px; }
+  .result-card { padding: 32px; }
+  table { font-size: 0.875rem; }
+}
+
+/* ===== Accessibility: focus-visible ===== */
+.btn-primary:focus-visible,
+.btn-reset:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--green-dark);
+  outline-offset: 2px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <header>
+    <h1>ESR Calculator</h1>
+    <p>Check if your round triggers an Exceptional Scoring Record</p>
+  </header>
+
+  <!-- Input Form -->
+  <form id="esr-form" class="card" novalidate>
+
+    <!-- Course & Tee Selection -->
+    <div class="section-label">Course</div>
+
+    <div class="form-group">
+      <label for="course">Golf Course</label>
+      <select id="course">
+        <option value="rocky-bayou">Rocky Bayou CC — Niceville, FL</option>
+        <option value="search">Search USGA Database...</option>
+        <option value="other">Enter manually</option>
+      </select>
+    </div>
+
+    <!-- Selected Course Badge (shown after USGA search selection) -->
+    <div id="selected-course-display" class="selected-course">
+      <div>
+        <div class="sc-name" id="sc-name"></div>
+        <div class="sc-detail" id="sc-detail"></div>
+      </div>
+      <button type="button" class="sc-change" id="sc-change-btn" aria-label="Change course">Change</button>
+    </div>
+
+    <!-- Search Panel (shown when "Search USGA Database..." is selected) -->
+    <div id="search-panel">
+      <div class="form-group">
+        <label for="search-input">Search by course name <span class="hint">(min. 3 letters)</span></label>
+        <input type="text" id="search-input" autocomplete="off" placeholder="e.g. Pebble Beach, Augusta National">
+      </div>
+      <div class="search-status" id="search-status"></div>
+      <ul class="search-results" id="search-results" role="listbox" aria-label="Course search results"></ul>
+      <div class="search-fallback" id="search-fallback" style="display:none">
+        Or look up your course at
+        <a href="https://ncrdb.usga.org/NCRListing" target="_blank" rel="noopener">ncrdb.usga.org</a>,
+        then enter the Course ID from the URL:
+        <div class="id-row">
+          <input type="text" id="course-id-input" inputmode="numeric" placeholder="Course ID (e.g. 31622)" aria-label="Course ID">
+          <button type="button" id="course-id-btn">Load</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" id="tee-group">
+      <label for="tee">Tees</label>
+      <select id="tee"></select>
+    </div>
+
+    <hr class="form-divider">
+
+    <!-- Player & Score -->
+    <div class="section-label">Player & Score</div>
+
+    <div class="form-group">
+      <label for="handicapIndex">Handicap Index <span class="hint">(e.g. 16.3)</span></label>
+      <input type="text" id="handicapIndex" inputmode="decimal" autocomplete="off" placeholder="-10.0 to 54.0">
+      <div class="error-msg" id="handicapIndex-err"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="courseRating">Course Rating <span class="hint">(e.g. 71.2)</span></label>
+      <input type="text" id="courseRating" inputmode="decimal" autocomplete="off" placeholder="55.0 to 85.0">
+      <div class="error-msg" id="courseRating-err"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="slopeRating">Slope Rating <span class="hint">(e.g. 128)</span></label>
+      <input type="text" id="slopeRating" inputmode="numeric" autocomplete="off" placeholder="55 to 155">
+      <div class="error-msg" id="slopeRating-err"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="par">Par <span class="hint">(e.g. 72)</span></label>
+      <input type="text" id="par" inputmode="numeric" autocomplete="off" placeholder="54 to 80">
+      <div class="error-msg" id="par-err"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="adjGrossScore">Adjusted Gross Score <span class="hint">(your score)</span></label>
+      <input type="text" id="adjGrossScore" inputmode="numeric" autocomplete="off" placeholder="40 to 200">
+      <div class="error-msg" id="adjGrossScore-err"></div>
+    </div>
+
+    <div class="btn-row">
+      <button type="submit" class="btn-primary">Calculate ESR</button>
+      <button type="button" class="btn-reset" id="reset-btn">Reset</button>
+    </div>
+  </form>
+
+  <!-- Results (hidden until calculated) -->
+  <div id="results-section" role="region" aria-live="polite" aria-label="Calculation results">
+    <div id="result-card" class="result-card">
+      <div class="result-verdict" id="result-verdict"></div>
+      <div class="result-subtitle" id="result-subtitle"></div>
+      <div class="result-stats" id="result-stats"></div>
+    </div>
+
+    <div class="table-section">
+      <h2>Reference Table</h2>
+      <div class="table-wrap">
+        <table id="ref-table" aria-label="Score reference table showing ESR status for nearby scores">
+          <thead>
+            <tr>
+              <th scope="col">Score</th>
+              <th scope="col">vs Par</th>
+              <th scope="col">Diff</th>
+              <th scope="col">HI - Diff</th>
+              <th scope="col">ESR</th>
+            </tr>
+          </thead>
+          <tbody id="ref-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>PCC (Playing Conditions Calculation) is a daily USGA adjustment and cannot be predicted in advance. Results shown are pre-PCC.</p>
+    <p>Course data from the <a href="https://ncrdb.usga.org" target="_blank" rel="noopener">USGA National Course Rating Database</a>. Not affiliated with the USGA.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ===== CORS Proxy =====
+  var PROXY = 'https://corsproxy.io/?';
+  var NCRDB = 'https://ncrdb.usga.org';
+
+  // ===== Built-in Course Data =====
+
+  var builtInCourses = {
+    'rocky-bayou': {
+      name: 'Rocky Bayou CC',
+      location: 'Niceville, FL',
+      tees: [
+        { name: 'Black',       gender: 'M', cr: 73.0, slope: 133, par: 72 },
+        { name: 'Black/Blue',  gender: 'M', cr: 71.9, slope: 131, par: 72 },
+        { name: 'Blue',        gender: 'M', cr: 70.8, slope: 128, par: 72 },
+        { name: 'Blue/White',  gender: 'M', cr: 69.2, slope: 126, par: 72 },
+        { name: 'White',       gender: 'M', cr: 67.8, slope: 119, par: 72 },
+        { name: 'White/Gold',  gender: 'M', cr: 66.7, slope: 116, par: 72 },
+        { name: 'Gold',        gender: 'M', cr: 65.6, slope: 114, par: 72 },
+        { name: 'Gold/Red',    gender: 'M', cr: 64.2, slope: 109, par: 72 },
+        { name: 'Red',         gender: 'M', cr: 63.6, slope: 100, par: 72 }
+      ],
+      defaultTee: 2
+    }
+  };
+
+  // Cache for courses fetched from USGA
+  var fetchedCourses = {};
+
+  // ===== DOM References =====
+
+  var courseSelect     = document.getElementById('course');
+  var teeSelect        = document.getElementById('tee');
+  var teeGroup         = document.getElementById('tee-group');
+  var crInput          = document.getElementById('courseRating');
+  var slopeInput       = document.getElementById('slopeRating');
+  var parInput         = document.getElementById('par');
+  var searchPanel      = document.getElementById('search-panel');
+  var searchInput      = document.getElementById('search-input');
+  var searchStatus     = document.getElementById('search-status');
+  var searchResults    = document.getElementById('search-results');
+  var searchFallback   = document.getElementById('search-fallback');
+  var courseIdInput     = document.getElementById('course-id-input');
+  var courseIdBtn       = document.getElementById('course-id-btn');
+  var selectedDisplay  = document.getElementById('selected-course-display');
+  var scName           = document.getElementById('sc-name');
+  var scDetail         = document.getElementById('sc-detail');
+  var scChangeBtn      = document.getElementById('sc-change-btn');
+
+  // ===== Course/Tee Logic =====
+
+  function getCourseData(courseId) {
+    return builtInCourses[courseId] || fetchedCourses[courseId] || null;
+  }
+
+  function populateTees(courseId) {
+    var course = getCourseData(courseId);
+    teeSelect.innerHTML = '';
+    if (!course || !course.tees || course.tees.length === 0) return;
+
+    course.tees.forEach(function (t, i) {
+      var opt = document.createElement('option');
+      opt.value = i;
+      var label = t.name;
+      if (t.gender) label += ' (' + t.gender + ')';
+      label += '  —  ' + t.cr.toFixed(1) + ' / ' + t.slope;
+      opt.textContent = label;
+      teeSelect.appendChild(opt);
+    });
+
+    teeSelect.value = course.defaultTee != null ? course.defaultTee : 0;
+  }
+
+  function applyTeeData(courseId) {
+    var course = getCourseData(courseId);
+
+    if (!course) {
+      // Manual entry mode
+      crInput.readOnly = false;
+      slopeInput.readOnly = false;
+      parInput.readOnly = false;
+      crInput.value = '';
+      slopeInput.value = '';
+      parInput.value = '';
+      return;
+    }
+
+    var tee = course.tees[teeSelect.value];
+    if (!tee) return;
+
+    crInput.value = tee.cr.toFixed(1);
+    slopeInput.value = tee.slope;
+    parInput.value = tee.par;
+    crInput.readOnly = true;
+    slopeInput.readOnly = true;
+    parInput.readOnly = true;
+  }
+
+  // Track currently active course ID
+  var activeCourseId = 'rocky-bayou';
+
+  function setActiveCourse(courseId) {
+    activeCourseId = courseId;
+    populateTees(courseId);
+    applyTeeData(courseId);
+  }
+
+  function updateUIForCourseMode(mode) {
+    // mode: 'builtin' | 'search' | 'fetched' | 'manual'
+    searchPanel.classList.remove('show');
+    selectedDisplay.classList.remove('show');
+    teeGroup.style.display = '';
+
+    if (mode === 'search') {
+      searchPanel.classList.add('show');
+      teeGroup.style.display = 'none';
+      crInput.readOnly = false;
+      slopeInput.readOnly = false;
+      parInput.readOnly = false;
+      crInput.value = '';
+      slopeInput.value = '';
+      parInput.value = '';
+      teeSelect.innerHTML = '';
+      searchInput.focus();
+    } else if (mode === 'fetched') {
+      var course = getCourseData(activeCourseId);
+      if (course) {
+        scName.textContent = course.name;
+        scDetail.textContent = course.location || '';
+        selectedDisplay.classList.add('show');
+      }
+    } else if (mode === 'manual') {
+      teeGroup.style.display = 'none';
+      crInput.readOnly = false;
+      slopeInput.readOnly = false;
+      parInput.readOnly = false;
+      crInput.value = '';
+      slopeInput.value = '';
+      parInput.value = '';
+      teeSelect.innerHTML = '';
+    }
+    // 'builtin' uses default display
+  }
+
+  // ===== USGA NCRDB Fetch Functions =====
+
+  function proxyFetch(url, options) {
+    var proxyUrl = PROXY + encodeURIComponent(url);
+    options = options || {};
+    options.signal = options.signal || null;
+    return fetch(proxyUrl, options);
+  }
+
+  var searchAbort = null;
+
+  function searchUSGA(query) {
+    // Cancel previous search
+    if (searchAbort) searchAbort.abort();
+    searchAbort = new AbortController();
+
+    searchResults.innerHTML = '';
+    searchStatus.className = 'search-status';
+    searchStatus.innerHTML = '<span class="spinner"></span>Searching USGA database...';
+    searchFallback.style.display = 'none';
+
+    // Step 1: Get the NCRDB listing page to extract CSRF token
+    var signal = searchAbort.signal;
+
+    proxyFetch(NCRDB + '/NCRListing', { signal: signal })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Could not reach USGA database');
+        return res.text();
+      })
+      .then(function (html) {
+        // Extract anti-forgery token
+        var match = html.match(/name="__RequestVerificationToken"[^>]*value="([^"]+)"/);
+        if (!match) throw new Error('CSRF_FAILED');
+        var token = match[1];
+
+        // Step 2: POST search request
+        return proxyFetch(NCRDB + '/NCRListing?handler=LoadCourses', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'RequestVerificationToken': token
+          },
+          body: 'clubName=' + encodeURIComponent(query) + '&clubCity=&clubState=&clubCountry=',
+          signal: signal
+        });
+      })
+      .then(function (res) {
+        if (!res.ok) throw new Error('CSRF_FAILED');
+        return res.json();
+      })
+      .then(function (data) {
+        if (!Array.isArray(data) || data.length === 0) {
+          searchStatus.textContent = 'No courses found. Try a different name.';
+          searchFallback.style.display = 'block';
+          return;
+        }
+        searchStatus.textContent = data.length + ' course' + (data.length !== 1 ? 's' : '') + ' found';
+        renderSearchResults(data);
+      })
+      .catch(function (err) {
+        if (err.name === 'AbortError') return;
+        // CSRF or network failure — show fallback
+        searchStatus.className = 'search-status error';
+        searchStatus.textContent = 'Course name search is currently unavailable.';
+        searchFallback.style.display = 'block';
+      });
+  }
+
+  function renderSearchResults(data) {
+    searchResults.innerHTML = '';
+    // Limit to 50 results for performance
+    var limit = Math.min(data.length, 50);
+    for (var i = 0; i < limit; i++) {
+      var c = data[i];
+      var li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.setAttribute('tabindex', '0');
+      li.dataset.courseId = c.courseID;
+      li.innerHTML =
+        '<div class="sr-name">' + escapeHtml(c.fullName) + '</div>' +
+        '<div class="sr-detail">' + escapeHtml(c.facilityName) + ' — ' + escapeHtml(c.city) + ', ' + escapeHtml(c.stateDisplay) + '</div>';
+
+      li.addEventListener('click', function () {
+        selectSearchResult(this.dataset.courseId, this.querySelector('.sr-name').textContent, this.querySelector('.sr-detail').textContent);
+      });
+      li.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          this.click();
+        }
+      });
+
+      searchResults.appendChild(li);
+    }
+    if (data.length > 50) {
+      var more = document.createElement('li');
+      more.className = 'sr-detail';
+      more.style.cursor = 'default';
+      more.textContent = '...and ' + (data.length - 50) + ' more. Refine your search.';
+      searchResults.appendChild(more);
+    }
+  }
+
+  function selectSearchResult(courseId, name, detail) {
+    // Show loading
+    searchStatus.innerHTML = '<span class="spinner"></span>Loading tee data...';
+    searchResults.innerHTML = '';
+    searchFallback.style.display = 'none';
+
+    loadTeeData(courseId, name, detail);
+  }
+
+  function loadTeeData(courseId, name, detail) {
+    proxyFetch(NCRDB + '/courseTeeInfo?CourseID=' + courseId)
+      .then(function (res) {
+        if (!res.ok) throw new Error('Could not load tee data');
+        return res.text();
+      })
+      .then(function (html) {
+        var tees = parseTeeHtml(html);
+        if (tees.length === 0) throw new Error('No tee data found');
+
+        // Extract course name from page if available
+        var courseName = name || 'Course ' + courseId;
+        var courseLocation = detail || '';
+
+        // Parse course name from page HTML
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(html, 'text/html');
+        var heading = doc.querySelector('h2, h3, .course-name, title');
+        if (heading) {
+          var hText = heading.textContent.trim();
+          // Format: "Name (ID) - City" or just the title
+          var nameMatch = hText.match(/^(.+?)\s*\(\d+\)/);
+          if (nameMatch) courseName = nameMatch[1].trim();
+        }
+
+        // Store in cache
+        var key = 'usga-' + courseId;
+        fetchedCourses[key] = {
+          name: courseName,
+          location: courseLocation,
+          tees: tees,
+          defaultTee: 0
+        };
+
+        // Add to dropdown if not already there
+        var existing = courseSelect.querySelector('option[value="' + key + '"]');
+        if (!existing) {
+          var opt = document.createElement('option');
+          opt.value = key;
+          opt.textContent = courseName;
+          // Insert before "Search" option
+          var searchOpt = courseSelect.querySelector('option[value="search"]');
+          courseSelect.insertBefore(opt, searchOpt);
+        }
+
+        // Select the new course
+        courseSelect.value = key;
+        activeCourseId = key;
+        setActiveCourse(key);
+        updateUIForCourseMode('fetched');
+        clearErrors();
+      })
+      .catch(function (err) {
+        searchStatus.className = 'search-status error';
+        searchStatus.textContent = 'Could not load tee data: ' + err.message;
+        searchFallback.style.display = 'block';
+      });
+  }
+
+  function parseTeeHtml(html) {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(html, 'text/html');
+    var table = doc.getElementById('gvCourses');
+    if (!table) {
+      // Fallback: find any table with tee data
+      var tables = doc.querySelectorAll('table');
+      for (var t = 0; t < tables.length; t++) {
+        var th = tables[t].querySelector('th');
+        if (th && /tee|rating|slope/i.test(tables[t].textContent)) {
+          table = tables[t];
+          break;
+        }
+      }
+    }
+    if (!table) return [];
+
+    // Find column indices from headers
+    var headers = table.querySelectorAll('thead th, thead td, tr:first-child th, tr:first-child td');
+    var colMap = {};
+    for (var h = 0; h < headers.length; h++) {
+      var txt = headers[h].textContent.trim().toLowerCase();
+      if (/tee\s*name/i.test(txt) || (h === 0 && /tee/i.test(txt))) colMap.name = h;
+      else if (/gender/i.test(txt)) colMap.gender = h;
+      else if (/^par$/i.test(txt)) colMap.par = h;
+      else if (/course\s*rating/i.test(txt)) colMap.cr = h;
+      else if (/^slope\s*rating/i.test(txt)) colMap.slope = h;
+    }
+
+    // Fallback: assume standard NCRDB column order
+    if (colMap.name == null) colMap.name = 0;
+    if (colMap.gender == null) colMap.gender = 1;
+    if (colMap.par == null) colMap.par = 2;
+    if (colMap.cr == null) colMap.cr = 3;
+    if (colMap.slope == null) colMap.slope = 5;
+
+    // Parse data rows
+    var rows = table.querySelectorAll('tbody tr');
+    if (rows.length === 0) {
+      // No tbody — skip first row (header) and use remaining
+      rows = table.querySelectorAll('tr');
+      rows = Array.prototype.slice.call(rows, 1);
+    }
+
+    var tees = [];
+    for (var r = 0; r < rows.length; r++) {
+      var cells = rows[r].querySelectorAll('td');
+      if (cells.length < 6) continue;
+
+      var teeName = (cells[colMap.name] || {}).textContent || '';
+      teeName = teeName.trim();
+      if (!teeName) continue;
+
+      var gender = (cells[colMap.gender] || {}).textContent || '';
+      gender = gender.trim().toUpperCase();
+
+      var par = parseInt((cells[colMap.par] || {}).textContent, 10);
+      var cr  = parseFloat((cells[colMap.cr] || {}).textContent);
+      var slope = parseInt((cells[colMap.slope] || {}).textContent, 10);
+
+      if (isNaN(par) || isNaN(cr) || isNaN(slope)) continue;
+
+      tees.push({
+        name: teeName,
+        gender: gender || null,
+        cr: cr,
+        slope: slope,
+        par: par
+      });
+    }
+
+    return tees;
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ===== Event Handlers: Course Selection =====
+
+  courseSelect.addEventListener('change', function () {
+    var val = this.value;
+
+    if (val === 'search') {
+      updateUIForCourseMode('search');
+    } else if (val === 'other') {
+      activeCourseId = null;
+      updateUIForCourseMode('manual');
+    } else {
+      activeCourseId = val;
+      setActiveCourse(val);
+      var isBuiltIn = !!builtInCourses[val];
+      updateUIForCourseMode(isBuiltIn ? 'builtin' : 'fetched');
+    }
+    clearErrors();
+  });
+
+  teeSelect.addEventListener('change', function () {
+    if (activeCourseId) applyTeeData(activeCourseId);
+    clearErrors();
+  });
+
+  // Search input with debounce
+  var searchTimer = null;
+  searchInput.addEventListener('input', function () {
+    var query = this.value.trim();
+    clearTimeout(searchTimer);
+    searchResults.innerHTML = '';
+    searchFallback.style.display = 'none';
+
+    if (query.length < 3) {
+      searchStatus.textContent = query.length > 0 ? 'Type at least 3 characters...' : '';
+      return;
+    }
+
+    searchStatus.textContent = '';
+    searchTimer = setTimeout(function () {
+      searchUSGA(query);
+    }, 500);
+  });
+
+  // Course ID direct lookup
+  courseIdBtn.addEventListener('click', function () {
+    var id = courseIdInput.value.trim();
+    if (!id || isNaN(parseInt(id, 10))) {
+      courseIdInput.classList.add('input-error');
+      return;
+    }
+    courseIdInput.classList.remove('input-error');
+    searchStatus.innerHTML = '<span class="spinner"></span>Loading tee data...';
+    searchFallback.style.display = 'none';
+    loadTeeData(id, null, null);
+  });
+
+  courseIdInput.addEventListener('input', function () {
+    this.classList.remove('input-error');
+  });
+
+  courseIdInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      courseIdBtn.click();
+    }
+  });
+
+  // "Change" button on selected course badge
+  scChangeBtn.addEventListener('click', function () {
+    courseSelect.value = 'search';
+    updateUIForCourseMode('search');
+  });
+
+  // Initialize
+  populateTees('rocky-bayou');
+  applyTeeData('rocky-bayou');
+
+  // ===== Pure Calculation Functions =====
+
+  function calcDifferential(ags, courseRating, slopeRating) {
+    var raw = (ags - courseRating) * 113 / slopeRating;
+    return Math.round(raw * 10) / 10;
+  }
+
+  function calcCourseHandicap(hi, slopeRating, courseRating, par) {
+    var raw = hi * (slopeRating / 113) + (courseRating - par);
+    return Math.round(raw);
+  }
+
+  function calcESR(hi, differential) {
+    var gap = Math.round((hi - differential) * 10) / 10;
+    if (gap >= 10.0) {
+      return { tier: 2, gap: gap, adjustment: -2 };
+    } else if (gap >= 7.0) {
+      return { tier: 1, gap: gap, adjustment: -1 };
+    }
+    return { tier: 0, gap: gap, adjustment: 0 };
+  }
+
+  function formatVsPar(score, par) {
+    var diff = score - par;
+    if (diff === 0) return 'E';
+    return diff > 0 ? '+' + diff : String(diff);
+  }
+
+  // ===== Validation =====
+
+  var fields = [
+    { id: 'handicapIndex', label: 'Handicap Index', min: -10, max: 54, decimal: true },
+    { id: 'courseRating',  label: 'Course Rating',  min: 55,  max: 85, decimal: true },
+    { id: 'slopeRating',  label: 'Slope Rating',   min: 55,  max: 155, decimal: false },
+    { id: 'par',           label: 'Par',             min: 54,  max: 80,  decimal: false },
+    { id: 'adjGrossScore', label: 'Adj. Gross Score', min: 40,  max: 200, decimal: false }
+  ];
+
+  function validateAll() {
+    var values = {};
+    var valid = true;
+
+    fields.forEach(function (f) {
+      var input = document.getElementById(f.id);
+      var errEl = document.getElementById(f.id + '-err');
+      var raw = input.value.trim();
+
+      input.classList.remove('input-error');
+      errEl.textContent = '';
+      errEl.classList.remove('visible');
+
+      if (raw === '') {
+        showError(input, errEl, f.label + ' is required.');
+        valid = false;
+        return;
+      }
+
+      var num = parseFloat(raw);
+      if (isNaN(num)) {
+        showError(input, errEl, 'Enter a valid number.');
+        valid = false;
+        return;
+      }
+
+      if (!f.decimal && num !== Math.floor(num)) {
+        showError(input, errEl, f.label + ' must be a whole number.');
+        valid = false;
+        return;
+      }
+
+      if (num < f.min || num > f.max) {
+        showError(input, errEl, 'Must be between ' + f.min + ' and ' + f.max + '.');
+        valid = false;
+        return;
+      }
+
+      values[f.id] = num;
+    });
+
+    return valid ? values : null;
+  }
+
+  function showError(input, errEl, msg) {
+    input.classList.add('input-error');
+    errEl.textContent = msg;
+    errEl.classList.add('visible');
+  }
+
+  function clearErrors() {
+    fields.forEach(function (f) {
+      var input = document.getElementById(f.id);
+      var errEl = document.getElementById(f.id + '-err');
+      input.classList.remove('input-error');
+      errEl.textContent = '';
+      errEl.classList.remove('visible');
+    });
+  }
+
+  // ===== Result Rendering =====
+
+  function renderResult(vals) {
+    var hi = vals.handicapIndex;
+    var cr = vals.courseRating;
+    var slope = vals.slopeRating;
+    var par = vals.par;
+    var ags = vals.adjGrossScore;
+
+    var differential = calcDifferential(ags, cr, slope);
+    var courseHcp = calcCourseHandicap(hi, slope, cr, par);
+    var esr = calcESR(hi, differential);
+
+    var section = document.getElementById('results-section');
+    var card = document.getElementById('result-card');
+    var verdict = document.getElementById('result-verdict');
+    var subtitle = document.getElementById('result-subtitle');
+    var stats = document.getElementById('result-stats');
+
+    card.className = 'result-card';
+
+    if (esr.tier === 0) {
+      card.classList.add('no-esr');
+      verdict.textContent = 'No ESR Triggered';
+      subtitle.textContent = 'This round does not trigger an Exceptional Scoring Record.';
+    } else if (esr.tier === 1) {
+      card.classList.add('tier1');
+      verdict.textContent = 'ESR — Tier 1';
+      subtitle.textContent = 'A -1 adjustment will be applied to your 20 most recent differentials.';
+    } else {
+      card.classList.add('tier2');
+      verdict.textContent = 'ESR — Tier 2';
+      subtitle.textContent = 'A -2 adjustment will be applied to your 20 most recent differentials.';
+    }
+
+    stats.innerHTML =
+      '<div class="result-stat"><div class="stat-value">' + differential.toFixed(1) + '</div><div class="stat-label">Differential</div></div>' +
+      '<div class="result-stat"><div class="stat-value">' + courseHcp + '</div><div class="stat-label">Course Hcp</div></div>' +
+      '<div class="result-stat"><div class="stat-value">' + esr.gap.toFixed(1) + '</div><div class="stat-label">HI - Diff</div></div>';
+
+    renderTable(hi, cr, slope, par, ags);
+
+    section.classList.remove('show');
+    void section.offsetWidth;
+    section.classList.add('show');
+
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderTable(hi, cr, slope, par, ags) {
+    var tbody = document.getElementById('ref-tbody');
+    tbody.innerHTML = '';
+
+    var lowScore = ags - 10;
+    var highScore = ags + 5;
+
+    for (var s = lowScore; s <= highScore; s++) {
+      var diff = calcDifferential(s, cr, slope);
+      var esr = calcESR(hi, diff);
+
+      var tr = document.createElement('tr');
+
+      if (s === ags) tr.classList.add('row-current');
+      if (esr.tier === 1) tr.classList.add('row-tier1');
+      if (esr.tier === 2) tr.classList.add('row-tier2');
+
+      var badgeClass, badgeText;
+      if (esr.tier === 0) {
+        badgeClass = 'badge-none';
+        badgeText = 'None';
+      } else if (esr.tier === 1) {
+        badgeClass = 'badge-tier1';
+        badgeText = 'Tier 1';
+      } else {
+        badgeClass = 'badge-tier2';
+        badgeText = 'Tier 2';
+      }
+
+      tr.innerHTML =
+        '<td>' + s + (s === ags ? ' *' : '') + '</td>' +
+        '<td>' + formatVsPar(s, par) + '</td>' +
+        '<td>' + diff.toFixed(1) + '</td>' +
+        '<td>' + esr.gap.toFixed(1) + '</td>' +
+        '<td><span class="esr-badge ' + badgeClass + '">' + badgeText + '</span></td>';
+
+      tbody.appendChild(tr);
+    }
+  }
+
+  // ===== Form Event Handlers =====
+
+  var form = document.getElementById('esr-form');
+  var resetBtn = document.getElementById('reset-btn');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var vals = validateAll();
+    if (vals) {
+      renderResult(vals);
+    }
+  });
+
+  resetBtn.addEventListener('click', function () {
+    courseSelect.value = 'rocky-bayou';
+    activeCourseId = 'rocky-bayou';
+    setActiveCourse('rocky-bayou');
+    updateUIForCourseMode('builtin');
+
+    document.getElementById('handicapIndex').value = '';
+    document.getElementById('adjGrossScore').value = '';
+
+    searchInput.value = '';
+    searchResults.innerHTML = '';
+    searchStatus.textContent = '';
+    searchFallback.style.display = 'none';
+    courseIdInput.value = '';
+
+    clearErrors();
+    document.getElementById('results-section').classList.remove('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Clear error on input
+  fields.forEach(function (f) {
+    document.getElementById(f.id).addEventListener('input', function () {
+      var errEl = document.getElementById(f.id + '-err');
+      this.classList.remove('input-error');
+      errEl.textContent = '';
+      errEl.classList.remove('visible');
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>
