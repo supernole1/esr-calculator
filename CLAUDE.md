@@ -31,8 +31,8 @@ Single static HTML file (`index.html`) with inline CSS and JS. No frameworks, no
 
 ## Features
 - **Course selection**: Built-in Rocky Bayou CC (Niceville, FL) with all 9 tee boxes; Blue tees default
-- **USGA course search**: Search the National Course Rating Database (ncrdb.usga.org) via Cloudflare Worker proxy; auto-populates tee data (Course Rating, Slope, Par)
-- **Course ID fallback**: Users can also enter a USGA Course ID directly to load tee data
+- **USGA course lookup**: User searches on ncrdb.usga.org directly, then pastes the URL or Course ID; tee data auto-loads via corsproxy.io (GET)
+- **Smart URL parsing**: Accepts full NCRDB URLs (auto-extracts CourseID) or plain numeric IDs
 - **Manual entry**: Enter Course Rating, Slope, Par by hand for any course
 - **Result card**: Color-coded verdict (green = No ESR, amber = Tier 1, red = Tier 2) with Differential, Course Hcp, and HI-Diff stats
 - **Reference table**: 16-row table (score -10 to +5) showing Differential, HI-Diff, and ESR status for each score; entered score highlighted
@@ -60,15 +60,16 @@ Rocky Bayou Country Club — Niceville, FL (Par 72 all tees):
 - **Repo**: https://github.com/supernole1/esr-calculator
 - **Hosting**: GitHub Pages (legacy build from `master` branch, root `/`)
 - **Git identity**: supernole1 / supernole1@users.noreply.github.com (repo-local config)
-- **CORS proxy**: Cloudflare Worker at `esr-course-search.supernole1.workers.dev` (handles USGA NCRDB search and tee data fetching with proper CSRF/cookie handling server-side)
-- **Worker source**: `worker/index.js` + `worker/wrangler.toml` (deploy with `npx wrangler deploy` from `worker/` dir)
-- **Worker endpoints**: `/search?q=name` (returns JSON array of courses), `/tees?id=courseId` (returns HTML for client-side parsing)
-- **Cloudflare free tier**: 100K requests/day
+- **CORS proxy**: corsproxy.io (browser-side GET requests for tee data loading)
+
+## Known Limitations
+- **USGA name search not possible via proxy**: The NCRDB search requires a POST with CSRF cookies, which no client-side CORS proxy can handle. Server-side proxies (Cloudflare Workers, Vercel/AWS Lambda) were also tested but Akamai CDN blocks all major cloud provider IPs. The workaround is having users search ncrdb.usga.org directly and paste the URL/Course ID back.
+- **Abandoned proxy attempts**: `worker/` (Cloudflare Worker) and `api/` (Vercel Serverless Functions) directories contain non-functional proxy code — both are blocked by Akamai. These are gitignored.
 
 ## Status
 - [x] Spreadsheet logic validated against USGA rules
 - [x] Web app architecture planned
 - [x] Web app built
 - [x] Deployed to GitHub Pages
-- [x] USGA course name search working via Cloudflare Worker (replaced corsproxy.io which couldn't handle CSRF)
+- [x] USGA course lookup via URL/ID paste with auto-extraction
 - [ ] Add more built-in courses if requested
