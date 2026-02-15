@@ -690,7 +690,6 @@ select:focus-visible {
     <div class="form-group">
       <label for="course">Golf Course</label>
       <select id="course">
-        <option value="rocky-bayou">Rocky Bayou CC — Niceville, FL</option>
         <option value="search">Look up on USGA Database...</option>
         <option value="other">Enter manually</option>
       </select>
@@ -837,26 +836,8 @@ select:focus-visible {
   var PROXY = 'https://corsproxy.io/?';
   var NCRDB = 'https://ncrdb.usga.org';
 
-  // ===== Built-in Course Data =====
-
-  var builtInCourses = {
-    'rocky-bayou': {
-      name: 'Rocky Bayou CC',
-      location: 'Niceville, FL',
-      tees: [
-        { name: 'Black',       gender: 'M', cr: 73.0, slope: 133, par: 72 },
-        { name: 'Black/Blue',  gender: 'M', cr: 71.9, slope: 131, par: 72 },
-        { name: 'Blue',        gender: 'M', cr: 70.8, slope: 128, par: 72 },
-        { name: 'Blue/White',  gender: 'M', cr: 69.2, slope: 126, par: 72 },
-        { name: 'White',       gender: 'M', cr: 67.8, slope: 119, par: 72 },
-        { name: 'White/Gold',  gender: 'M', cr: 66.7, slope: 116, par: 72 },
-        { name: 'Gold',        gender: 'M', cr: 65.6, slope: 114, par: 72 },
-        { name: 'Gold/Red',    gender: 'M', cr: 64.2, slope: 109, par: 72 },
-        { name: 'Red',         gender: 'M', cr: 63.6, slope: 100, par: 72 }
-      ],
-      defaultTee: 2
-    }
-  };
+  // ===== Default Course =====
+  var DEFAULT_COURSE_ID = '14208';  // Rocky Bayou CC, Niceville FL
 
   // Cache for courses fetched from USGA
   var fetchedCourses = {};
@@ -881,7 +862,7 @@ select:focus-visible {
   // ===== Course/Tee Logic =====
 
   function getCourseData(courseId) {
-    return builtInCourses[courseId] || fetchedCourses[courseId] || null;
+    return fetchedCourses[courseId] || null;
   }
 
   function populateTees(courseId) {
@@ -928,7 +909,7 @@ select:focus-visible {
   }
 
   // Track currently active course ID
-  var activeCourseId = 'rocky-bayou';
+  var activeCourseId = null;
 
   function setActiveCourse(courseId) {
     activeCourseId = courseId;
@@ -937,7 +918,7 @@ select:focus-visible {
   }
 
   function updateUIForCourseMode(mode) {
-    // mode: 'builtin' | 'search' | 'fetched' | 'manual'
+    // mode: 'search' | 'fetched' | 'manual'
     searchPanel.classList.remove('show');
     selectedDisplay.classList.remove('show');
     teeGroup.style.display = '';
@@ -970,7 +951,7 @@ select:focus-visible {
       parInput.value = '';
       teeSelect.innerHTML = '';
     }
-    // 'builtin' uses default display
+    // 'fetched' default — show tee selector and selected course badge
   }
 
   // ===== USGA NCRDB Fetch Functions =====
@@ -1015,13 +996,19 @@ select:focus-visible {
           }
         }
 
+        // Pick default tee: prefer "Blue" if available, else first
+        var defaultTee = 0;
+        for (var ti = 0; ti < tees.length; ti++) {
+          if (/^blue$/i.test(tees[ti].name)) { defaultTee = ti; break; }
+        }
+
         // Store in cache
         var key = 'usga-' + courseId;
         fetchedCourses[key] = {
           name: courseName,
           location: courseLocation,
           tees: tees,
-          defaultTee: 0
+          defaultTee: defaultTee
         };
 
         // Add to dropdown if not already there
@@ -1135,8 +1122,7 @@ select:focus-visible {
     } else {
       activeCourseId = val;
       setActiveCourse(val);
-      var isBuiltIn = !!builtInCourses[val];
-      updateUIForCourseMode(isBuiltIn ? 'builtin' : 'fetched');
+      updateUIForCourseMode('fetched');
     }
     clearErrors();
   });
@@ -1189,9 +1175,8 @@ select:focus-visible {
     updateUIForCourseMode('search');
   });
 
-  // Initialize
-  populateTees('rocky-bayou');
-  applyTeeData('rocky-bayou');
+  // Initialize — load default course from USGA database
+  loadTeeData(DEFAULT_COURSE_ID, null, null);
 
   // ===== Pure Calculation Functions =====
 
@@ -1394,10 +1379,19 @@ select:focus-visible {
   });
 
   resetBtn.addEventListener('click', function () {
-    courseSelect.value = 'rocky-bayou';
-    activeCourseId = 'rocky-bayou';
-    setActiveCourse('rocky-bayou');
-    updateUIForCourseMode('builtin');
+    // Reset to default course (already cached from initial load)
+    var defaultKey = 'usga-' + DEFAULT_COURSE_ID;
+    if (fetchedCourses[defaultKey]) {
+      courseSelect.value = defaultKey;
+      activeCourseId = defaultKey;
+      setActiveCourse(defaultKey);
+      updateUIForCourseMode('fetched');
+    } else {
+      // If default wasn't loaded yet, reload it
+      courseSelect.value = 'search';
+      updateUIForCourseMode('search');
+      loadTeeData(DEFAULT_COURSE_ID, null, null);
+    }
 
     document.getElementById('handicapIndex').value = '';
     document.getElementById('adjGrossScore').value = '';
