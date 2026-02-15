@@ -860,11 +860,11 @@ select:focus-visible {
 
   <div class="info-tooltip" id="esr-tooltip" role="dialog" aria-label="Exceptional Scoring Record explanation">
     <div class="tt-title">Exceptional Scoring Record (ESR)</div>
-    When your Score Differential is significantly better than your Handicap Index, an automatic reduction is applied to your most recent 20 differentials:
+    When your Score Differential is significantly better than your Handicap Index, an automatic reduction kicks in:
     <div class="tt-formula">Gap = Handicap Index - Score Differential</div>
-    <strong>Tier 1</strong> — Gap of 7.0 to 9.9: a <strong>-1</strong> adjustment is applied to each of your 20 most recent differentials.<br><br>
-    <strong>Tier 2</strong> — Gap of 10.0 or more: a <strong>-2</strong> adjustment is applied to each of your 20 most recent differentials.<br><br>
-    Future scores won't carry the adjustment (unless also exceptional), so the reduction gradually fades as new rounds are posted. Multiple exceptional scores are cumulative.
+    <strong>Tier 1</strong> — Gap of 7.0 to 9.9: effectively reduces your Handicap Index by <strong>1 stroke</strong>.<br><br>
+    <strong>Tier 2</strong> — Gap of 10.0 or more: effectively reduces your Handicap Index by <strong>2 strokes</strong>.<br><br>
+    This is applied by adjusting each of your 20 most recent differentials by -1 or -2. The reduction fades naturally as new rounds are posted without the adjustment. Multiple exceptional scores stack.
     <div class="tt-sources">
       Sources:
       <a href="https://www.usga.org/content/usga/home-page/handicapping/world-handicap-system/topics/exceptional-score-reduction.html" target="_blank" rel="noopener">USGA — Exceptional Score Reduction</a>,
