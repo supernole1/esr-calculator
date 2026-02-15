@@ -838,6 +838,19 @@ select:focus-visible {
     <div class="tt-close">Tap anywhere to close</div>
   </div>
 
+  <div class="info-tooltip" id="chcp-tooltip" role="dialog" aria-label="Course Handicap explanation">
+    <div class="tt-title">Course Handicap</div>
+    The number of strokes you receive on a specific course, adjusted for its difficulty relative to par.
+    <div class="tt-formula">Handicap Index × ( Slope Rating / 113 ) + ( Course Rating - Par )</div>
+    The result is rounded to the nearest whole number. A higher slope means more strokes; the Course Rating minus Par adjustment accounts for courses where the rating differs significantly from par.
+    <div class="tt-sources">
+      Sources:
+      <a href="https://www.usga.org/content/usga/home-page/handicapping/world-handicap-system/topics/course-handicap-calculation.html" target="_blank" rel="noopener">USGA — Course Handicap Calculation</a>,
+      <a href="https://www.usga.org/content/usga/home-page/handicapping/world-handicap-system/world-handicap-system-usga-golf-faqs/faqs---course-handicap.html" target="_blank" rel="noopener">USGA — Course Handicap FAQ</a>
+    </div>
+    <div class="tt-close">Tap anywhere to close</div>
+  </div>
+
   <div class="info-tooltip" id="esr-tooltip" role="dialog" aria-label="Exceptional Scoring Record explanation">
     <div class="tt-title">Exceptional Scoring Record (ESR)</div>
     When your Score Differential is significantly better than your Handicap Index, an automatic reduction kicks in:
@@ -1488,7 +1501,7 @@ select:focus-visible {
 
     stats.innerHTML =
       '<div class="result-stat"><div class="stat-value">' + differential.toFixed(1) + '</div><div class="stat-label">Differential <button type="button" class="info-btn" data-tooltip="diff-tooltip" aria-label="What is a Score Differential?">i</button></div></div>' +
-      '<div class="result-stat"><div class="stat-value">' + courseHcp + '</div><div class="stat-label">Course Hcp</div></div>' +
+      '<div class="result-stat"><div class="stat-value">' + courseHcp + '</div><div class="stat-label">Course Hcp <button type="button" class="info-btn" data-tooltip="chcp-tooltip" aria-label="What is Course Handicap?">i</button></div></div>' +
       '<div class="result-stat"><div class="stat-value">' + esr.gap.toFixed(1) + '</div><div class="stat-label">HI - Diff</div></div>';
 
     renderTable(hi, cr, slope, par, ags);
