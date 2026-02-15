@@ -959,6 +959,7 @@ select:focus-visible {
       var label = t.name;
       if (t.gender) label += ' (' + t.gender + ')';
       label += '  —  ' + t.cr.toFixed(1) + ' / ' + t.slope;
+      if (t.yards) label += '  —  ' + t.yards.toLocaleString() + ' yds';
       opt.textContent = label;
       teeSelect.appendChild(opt);
     });
@@ -1156,6 +1157,7 @@ select:focus-visible {
       else if (/^par$/i.test(txt)) colMap.par = h;
       else if (/course\s*rating/i.test(txt)) colMap.cr = h;
       else if (/^slope\s*rating/i.test(txt)) colMap.slope = h;
+      else if (/^length$/i.test(txt)) colMap.length = h;
     }
 
     // Fallback: assume standard NCRDB column order
@@ -1164,6 +1166,7 @@ select:focus-visible {
     if (colMap.par == null) colMap.par = 2;
     if (colMap.cr == null) colMap.cr = 3;
     if (colMap.slope == null) colMap.slope = 5;
+    if (colMap.length == null) colMap.length = 15;
 
     // Parse data rows
     var rows = table.querySelectorAll('tbody tr');
@@ -1188,6 +1191,7 @@ select:focus-visible {
       var par = parseInt((cells[colMap.par] || {}).textContent, 10);
       var cr  = parseFloat((cells[colMap.cr] || {}).textContent);
       var slope = parseInt((cells[colMap.slope] || {}).textContent, 10);
+      var yards = parseInt((cells[colMap.length] || {}).textContent, 10);
 
       if (isNaN(par) || isNaN(cr) || isNaN(slope)) continue;
 
@@ -1196,7 +1200,8 @@ select:focus-visible {
         gender: gender || null,
         cr: cr,
         slope: slope,
-        par: par
+        par: par,
+        yards: isNaN(yards) ? null : yards
       });
     }
 
