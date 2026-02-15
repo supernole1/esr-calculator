@@ -30,8 +30,9 @@ https://supernole1.github.io/esr-calculator/
 Single static HTML file (`index.html`) with inline CSS and JS. No frameworks, no dependencies, no build tools. Hosted on GitHub Pages; auto-deploys on push to `master`.
 
 ## Features
-- **Course selection**: Built-in Rocky Bayou CC (Niceville, FL) with all 9 tee boxes; Blue tees default
+- **Default course**: Rocky Bayou CC (Course ID 14208) fetched live from USGA NCRDB on first load; Blue tees auto-selected
 - **USGA course lookup**: User searches on ncrdb.usga.org directly, then pastes the URL or Course ID; tee data auto-loads via corsproxy.io (GET)
+- **Course persistence**: Searched courses saved to localStorage with "last updated" timestamps; persist across sessions on the same device; Refresh button re-fetches from USGA
 - **Smart URL parsing**: Accepts full NCRDB URLs (auto-extracts CourseID) or plain numeric IDs
 - **Manual entry**: Enter Course Rating, Slope, Par by hand for any course
 - **Result card**: Color-coded verdict (green = No ESR, amber = Tier 1, red = Tier 2) with Differential, Course Hcp, and HI-Diff stats
@@ -42,19 +43,8 @@ Single static HTML file (`index.html`) with inline CSS and JS. No frameworks, no
 - **Accessible**: ARIA live regions, focus-visible outlines, prefers-reduced-motion support
 - **Red asterisks** on all required fields
 
-## Built-in Course Data
-Rocky Bayou Country Club — Niceville, FL (Par 72 all tees):
-| Tee | Course Rating | Slope |
-|-----|--------------|-------|
-| Black | 73.0 | 133 |
-| Black/Blue | 71.9 | 131 |
-| Blue (default) | 70.8 | 128 |
-| Blue/White | 69.2 | 126 |
-| White | 67.8 | 119 |
-| White/Gold | 66.7 | 116 |
-| Gold | 65.6 | 114 |
-| Gold/Red | 64.2 | 109 |
-| Red | 63.6 | 100 |
+## Default Course
+Rocky Bayou Country Club — Niceville, FL (Course ID 14208). Fetched live from USGA NCRDB; no hardcoded tee data. Blue tees auto-selected as default.
 
 ## Deployment
 - **Repo**: https://github.com/supernole1/esr-calculator
@@ -72,4 +62,6 @@ Rocky Bayou Country Club — Niceville, FL (Par 72 all tees):
 - [x] Web app built
 - [x] Deployed to GitHub Pages
 - [x] USGA course lookup via URL/ID paste with auto-extraction
+- [x] Default course (Rocky Bayou) fetched live from USGA NCRDB
+- [x] Searched courses persisted in localStorage with timestamps
 - [ ] Add more built-in courses if requested

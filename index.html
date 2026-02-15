@@ -276,6 +276,12 @@ header p {
   color: var(--gray-500);
 }
 
+.selected-course .sc-updated {
+  font-size: 0.6875rem;
+  color: var(--gray-400);
+  margin-top: 2px;
+}
+
 .selected-course .sc-change {
   font-size: 0.8125rem;
   color: var(--green-dark);
@@ -697,11 +703,15 @@ select:focus-visible {
 
     <!-- Selected Course Badge (shown after USGA search selection) -->
     <div id="selected-course-display" class="selected-course">
-      <div>
+      <div style="flex:1;min-width:0">
         <div class="sc-name" id="sc-name"></div>
         <div class="sc-detail" id="sc-detail"></div>
+        <div class="sc-updated" id="sc-updated"></div>
       </div>
-      <button type="button" class="sc-change" id="sc-change-btn" aria-label="Change course">Change</button>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <button type="button" class="sc-change" id="sc-change-btn" aria-label="Change course">Change</button>
+        <button type="button" class="sc-change" id="sc-refresh-btn" aria-label="Refresh course data">Refresh</button>
+      </div>
     </div>
 
     <!-- Search Panel (shown when "Search USGA Database..." is selected) -->
@@ -842,6 +852,44 @@ select:focus-visible {
   // Cache for courses fetched from USGA
   var fetchedCourses = {};
 
+  // ===== localStorage Persistence =====
+  var STORAGE_KEY = 'esr-saved-courses';
+
+  function saveCourses() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fetchedCourses));
+    } catch (e) { /* storage full or unavailable */ }
+  }
+
+  function loadSavedCourses() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      var saved = JSON.parse(raw);
+      for (var key in saved) {
+        if (!saved.hasOwnProperty(key)) continue;
+        fetchedCourses[key] = saved[key];
+        // Add to dropdown
+        var existing = courseSelect.querySelector('option[value="' + key + '"]');
+        if (!existing) {
+          var opt = document.createElement('option');
+          opt.value = key;
+          var c = saved[key];
+          opt.textContent = c.location ? c.name + ' — ' + c.location : c.name;
+          var searchOpt = courseSelect.querySelector('option[value="search"]');
+          courseSelect.insertBefore(opt, searchOpt);
+        }
+      }
+    } catch (e) { /* corrupt data or unavailable */ }
+  }
+
+  function formatDate(isoString) {
+    if (!isoString) return '';
+    var d = new Date(isoString);
+    if (isNaN(d.getTime())) return '';
+    return (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+  }
+
   // ===== DOM References =====
 
   var courseSelect     = document.getElementById('course');
@@ -858,6 +906,8 @@ select:focus-visible {
   var scName           = document.getElementById('sc-name');
   var scDetail         = document.getElementById('sc-detail');
   var scChangeBtn      = document.getElementById('sc-change-btn');
+  var scRefreshBtn     = document.getElementById('sc-refresh-btn');
+  var scUpdated        = document.getElementById('sc-updated');
 
   // ===== Course/Tee Logic =====
 
@@ -939,6 +989,7 @@ select:focus-visible {
       if (course) {
         scName.textContent = course.name;
         scDetail.textContent = course.location || '';
+        scUpdated.textContent = course.updatedAt ? 'Updated ' + formatDate(course.updatedAt) : '';
         selectedDisplay.classList.add('show');
       }
     } else if (mode === 'manual') {
@@ -1002,14 +1053,16 @@ select:focus-visible {
           if (/^blue$/i.test(tees[ti].name)) { defaultTee = ti; break; }
         }
 
-        // Store in cache
+        // Store in cache with timestamp
         var key = 'usga-' + courseId;
         fetchedCourses[key] = {
           name: courseName,
           location: courseLocation,
           tees: tees,
-          defaultTee: defaultTee
+          defaultTee: defaultTee,
+          updatedAt: new Date().toISOString()
         };
+        saveCourses();
 
         // Add to dropdown if not already there
         var existing = courseSelect.querySelector('option[value="' + key + '"]');
@@ -1020,6 +1073,9 @@ select:focus-visible {
           // Insert before "Search" option
           var searchOpt = courseSelect.querySelector('option[value="search"]');
           courseSelect.insertBefore(opt, searchOpt);
+        } else {
+          // Update existing option text in case name/location changed
+          existing.textContent = courseLocation ? courseName + ' — ' + courseLocation : courseName;
         }
 
         // Select the new course
@@ -1175,8 +1231,26 @@ select:focus-visible {
     updateUIForCourseMode('search');
   });
 
-  // Initialize — load default course from USGA database
-  loadTeeData(DEFAULT_COURSE_ID, null, null);
+  // "Refresh" button — re-fetch current course from USGA
+  scRefreshBtn.addEventListener('click', function () {
+    if (!activeCourseId) return;
+    var courseId = activeCourseId.replace(/^usga-/, '');
+    searchStatus.innerHTML = '<span class="spinner"></span>Refreshing course data...';
+    loadTeeData(courseId, null, null);
+  });
+
+  // Initialize — load saved courses from localStorage, then fetch default if needed
+  loadSavedCourses();
+  var defaultKey = 'usga-' + DEFAULT_COURSE_ID;
+  if (fetchedCourses[defaultKey]) {
+    // Use cached data — no network fetch needed
+    courseSelect.value = defaultKey;
+    activeCourseId = defaultKey;
+    setActiveCourse(defaultKey);
+    updateUIForCourseMode('fetched');
+  } else {
+    loadTeeData(DEFAULT_COURSE_ID, null, null);
+  }
 
   // ===== Pure Calculation Functions =====
 
