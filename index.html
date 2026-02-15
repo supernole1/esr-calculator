@@ -464,6 +464,102 @@ header p {
   letter-spacing: 0.04em;
 }
 
+/* ===== Info Tooltip ===== */
+.info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  border: 1.5px solid currentColor;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  vertical-align: middle;
+  margin-left: 3px;
+  line-height: 1;
+  position: relative;
+}
+
+th .info-btn {
+  color: var(--white);
+}
+
+.stat-label .info-btn {
+  color: var(--gray-500);
+  background: var(--gray-100);
+  border-color: var(--gray-400);
+  width: 16px;
+  height: 16px;
+  font-size: 0.625rem;
+}
+
+.info-tooltip {
+  display: none;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 48px);
+  max-width: 340px;
+  background: var(--gray-900);
+  color: var(--white);
+  border-radius: 10px;
+  padding: 16px 18px;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  font-weight: 400;
+  text-align: left;
+  z-index: 1000;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+
+.info-tooltip.show {
+  display: block;
+}
+
+.info-tooltip .tt-title {
+  font-weight: 700;
+  font-size: 0.875rem;
+  margin-bottom: 6px;
+}
+
+.info-tooltip .tt-formula {
+  font-family: "SF Mono", "Menlo", "Consolas", monospace;
+  font-size: 0.75rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 8px 0;
+  text-align: center;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.info-tooltip .tt-close {
+  display: block;
+  text-align: center;
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--gray-400);
+}
+
+.info-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 999;
+}
+
+.info-overlay.show {
+  display: block;
+}
+
 /* ===== Reference Table ===== */
 .table-section {
   margin-top: 20px;
@@ -721,7 +817,7 @@ select:focus-visible {
             <tr>
               <th scope="col">Score</th>
               <th scope="col">vs Par</th>
-              <th scope="col">Diff</th>
+              <th scope="col">Diff <button type="button" class="info-btn" data-tooltip="diff-tooltip" aria-label="What is a Score Differential?">i</button></th>
               <th scope="col">HI - Diff</th>
               <th scope="col">ESR</th>
             </tr>
@@ -730,6 +826,16 @@ select:focus-visible {
         </table>
       </div>
     </div>
+  </div>
+
+  <!-- Tooltip overlay + popup -->
+  <div class="info-overlay" id="info-overlay"></div>
+  <div class="info-tooltip" id="diff-tooltip" role="dialog" aria-label="Score Differential explanation">
+    <div class="tt-title">Score Differential</div>
+    Measures how you played relative to the course difficulty.
+    <div class="tt-formula">( Adj. Gross Score - Course Rating ) × 113 / Slope Rating</div>
+    A lower differential means a better round. Your Handicap Index is generally the average of the best 8 differentials from your last 20 rounds (fewer differentials are used with fewer rounds on record).
+    <div class="tt-close">Tap anywhere to close</div>
   </div>
 
   <!-- Footer -->
@@ -1348,7 +1454,7 @@ select:focus-visible {
     }
 
     stats.innerHTML =
-      '<div class="result-stat"><div class="stat-value">' + differential.toFixed(1) + '</div><div class="stat-label">Differential</div></div>' +
+      '<div class="result-stat"><div class="stat-value">' + differential.toFixed(1) + '</div><div class="stat-label">Differential <button type="button" class="info-btn" data-tooltip="diff-tooltip" aria-label="What is a Score Differential?">i</button></div></div>' +
       '<div class="result-stat"><div class="stat-value">' + courseHcp + '</div><div class="stat-label">Course Hcp</div></div>' +
       '<div class="result-stat"><div class="stat-value">' + esr.gap.toFixed(1) + '</div><div class="stat-label">HI - Diff</div></div>';
 
@@ -1442,6 +1548,40 @@ select:focus-visible {
       errEl.textContent = '';
       errEl.classList.remove('visible');
     });
+  });
+
+  // ===== Info Tooltips =====
+
+  var overlay = document.getElementById('info-overlay');
+
+  function showTooltip(id) {
+    var tip = document.getElementById(id);
+    if (!tip) return;
+    overlay.classList.add('show');
+    tip.classList.add('show');
+  }
+
+  function hideAllTooltips() {
+    overlay.classList.remove('show');
+    var tips = document.querySelectorAll('.info-tooltip.show');
+    for (var i = 0; i < tips.length; i++) {
+      tips[i].classList.remove('show');
+    }
+  }
+
+  // Delegate click on info buttons (handles dynamically created ones too)
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.info-btn');
+    if (btn) {
+      e.preventDefault();
+      e.stopPropagation();
+      showTooltip(btn.dataset.tooltip);
+      return;
+    }
+    // Close on overlay or tooltip click
+    if (e.target.closest('.info-overlay') || e.target.closest('.info-tooltip')) {
+      hideAllTooltips();
+    }
   });
 
 })();
