@@ -94,6 +94,11 @@ header p {
   margin-bottom: 4px;
 }
 
+.form-group label .required {
+  color: var(--red);
+  margin-left: 2px;
+}
+
 .form-group label .hint {
   font-weight: 400;
   color: var(--gray-400);
@@ -664,35 +669,32 @@ select:focus-visible {
 
     <hr class="form-divider">
 
-    <!-- Player & Score -->
-    <div class="section-label">Player & Score</div>
-
     <div class="form-group">
-      <label for="handicapIndex">Handicap Index <span class="hint">(e.g. 16.3)</span></label>
-      <input type="text" id="handicapIndex" inputmode="decimal" autocomplete="off" placeholder="-10.0 to 54.0">
-      <div class="error-msg" id="handicapIndex-err"></div>
-    </div>
-
-    <div class="form-group">
-      <label for="courseRating">Course Rating <span class="hint">(e.g. 71.2)</span></label>
+      <label for="courseRating">Course Rating<span class="required">*</span> <span class="hint">(e.g. 71.2)</span></label>
       <input type="text" id="courseRating" inputmode="decimal" autocomplete="off" placeholder="55.0 to 85.0">
       <div class="error-msg" id="courseRating-err"></div>
     </div>
 
     <div class="form-group">
-      <label for="slopeRating">Slope Rating <span class="hint">(e.g. 128)</span></label>
+      <label for="slopeRating">Slope Rating<span class="required">*</span> <span class="hint">(e.g. 128)</span></label>
       <input type="text" id="slopeRating" inputmode="numeric" autocomplete="off" placeholder="55 to 155">
       <div class="error-msg" id="slopeRating-err"></div>
     </div>
 
     <div class="form-group">
-      <label for="par">Par <span class="hint">(e.g. 72)</span></label>
+      <label for="par">Par<span class="required">*</span> <span class="hint">(e.g. 72)</span></label>
       <input type="text" id="par" inputmode="numeric" autocomplete="off" placeholder="54 to 80">
       <div class="error-msg" id="par-err"></div>
     </div>
 
     <div class="form-group">
-      <label for="adjGrossScore">Adjusted Gross Score <span class="hint">(your score)</span></label>
+      <label for="handicapIndex">Handicap Index<span class="required">*</span> <span class="hint">(e.g. 16.3)</span></label>
+      <input type="text" id="handicapIndex" inputmode="decimal" autocomplete="off" placeholder="-10.0 to 54.0">
+      <div class="error-msg" id="handicapIndex-err"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="adjGrossScore">Adjusted Gross Score<span class="required">*</span> <span class="hint">(your score)</span></label>
       <input type="text" id="adjGrossScore" inputmode="numeric" autocomplete="off" placeholder="40 to 200">
       <div class="error-msg" id="adjGrossScore-err"></div>
     </div>
