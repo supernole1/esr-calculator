@@ -540,6 +540,21 @@ th .info-btn {
   white-space: normal;
 }
 
+.info-tooltip .tt-sources {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  font-size: 0.6875rem;
+  color: var(--gray-400);
+  line-height: 1.5;
+}
+
+.info-tooltip .tt-sources a {
+  color: #93c5fd;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .info-tooltip .tt-close {
   display: block;
   text-align: center;
@@ -819,7 +834,7 @@ select:focus-visible {
               <th scope="col">vs Par</th>
               <th scope="col">Diff <button type="button" class="info-btn" data-tooltip="diff-tooltip" aria-label="What is a Score Differential?">i</button></th>
               <th scope="col">HI - Diff</th>
-              <th scope="col">ESR</th>
+              <th scope="col">ESR <button type="button" class="info-btn" data-tooltip="esr-tooltip" aria-label="What is an Exceptional Scoring Record?">i</button></th>
             </tr>
           </thead>
           <tbody id="ref-tbody"></tbody>
@@ -835,6 +850,26 @@ select:focus-visible {
     Measures how you played relative to the course difficulty.
     <div class="tt-formula">( Adj. Gross Score - Course Rating ) × 113 / Slope Rating</div>
     A lower differential means a better round. Your Handicap Index is generally the average of the best 8 differentials from your last 20 rounds (fewer differentials are used with fewer rounds on record).
+    <div class="tt-sources">
+      Sources:
+      <a href="https://www.usga.org/content/usga/home-page/handicapping/world-handicap-system/topics/handicap-index-calculation.html" target="_blank" rel="noopener">USGA — Handicap Index Calculation</a>,
+      <a href="https://www.usga.org/content/usga/home-page/handicapping/world-handicap-system/world-handicap-system-usga-golf-faqs/faqs---how-is-a-handicap-index-calculated.html" target="_blank" rel="noopener">USGA — Handicap FAQ</a>
+    </div>
+    <div class="tt-close">Tap anywhere to close</div>
+  </div>
+
+  <div class="info-tooltip" id="esr-tooltip" role="dialog" aria-label="Exceptional Scoring Record explanation">
+    <div class="tt-title">Exceptional Scoring Record (ESR)</div>
+    When your Score Differential is significantly better than your Handicap Index, an automatic reduction is applied to your most recent 20 differentials:
+    <div class="tt-formula">Gap = Handicap Index - Score Differential</div>
+    <strong>Tier 1</strong> — Gap of 7.0 to 9.9: a <strong>-1</strong> adjustment is applied to each of your 20 most recent differentials.<br><br>
+    <strong>Tier 2</strong> — Gap of 10.0 or more: a <strong>-2</strong> adjustment is applied to each of your 20 most recent differentials.<br><br>
+    Future scores won't carry the adjustment (unless also exceptional), so the reduction gradually fades as new rounds are posted. Multiple exceptional scores are cumulative.
+    <div class="tt-sources">
+      Sources:
+      <a href="https://www.usga.org/content/usga/home-page/handicapping/world-handicap-system/topics/exceptional-score-reduction.html" target="_blank" rel="noopener">USGA — Exceptional Score Reduction</a>,
+      <a href="https://www.usga.org/content/usga/home-page/handicapping/world-handicap-system/world-handicap-system-usga-golf-faqs/faqs---what-is-an-exceptional-score-.html" target="_blank" rel="noopener">USGA — Exceptional Score FAQ</a>
+    </div>
     <div class="tt-close">Tap anywhere to close</div>
   </div>
 
