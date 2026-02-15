@@ -884,9 +884,8 @@ select:focus-visible {
 (function () {
   'use strict';
 
-  // ===== CORS Proxy =====
-  var PROXY = 'https://corsproxy.io/?';
-  var NCRDB = 'https://ncrdb.usga.org';
+  // ===== Cloudflare Worker Proxy =====
+  var WORKER = 'https://esr-course-search.supernole1.workers.dev';
 
   // ===== Built-in Course Data =====
 
@@ -1029,13 +1028,6 @@ select:focus-visible {
 
   // ===== USGA NCRDB Fetch Functions =====
 
-  function proxyFetch(url, options) {
-    var proxyUrl = PROXY + encodeURIComponent(url);
-    options = options || {};
-    options.signal = options.signal || null;
-    return fetch(proxyUrl, options);
-  }
-
   var searchAbort = null;
 
   function searchUSGA(query) {
@@ -1048,36 +1040,16 @@ select:focus-visible {
     searchStatus.innerHTML = '<span class="spinner"></span>Searching USGA database...';
     searchFallback.style.display = 'none';
 
-    // Step 1: Get the NCRDB listing page to extract CSRF token
     var signal = searchAbort.signal;
 
-    proxyFetch(NCRDB + '/NCRListing', { signal: signal })
+    // Worker handles CSRF server-side — just a simple GET
+    fetch(WORKER + '/search?q=' + encodeURIComponent(query), { signal: signal })
       .then(function (res) {
-        if (!res.ok) throw new Error('Could not reach USGA database');
-        return res.text();
-      })
-      .then(function (html) {
-        // Extract anti-forgery token
-        var match = html.match(/name="__RequestVerificationToken"[^>]*value="([^"]+)"/);
-        if (!match) throw new Error('CSRF_FAILED');
-        var token = match[1];
-
-        // Step 2: POST search request
-        return proxyFetch(NCRDB + '/NCRListing?handler=LoadCourses', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'RequestVerificationToken': token
-          },
-          body: 'clubName=' + encodeURIComponent(query) + '&clubCity=&clubState=&clubCountry=',
-          signal: signal
-        });
-      })
-      .then(function (res) {
-        if (!res.ok) throw new Error('CSRF_FAILED');
+        if (!res.ok) throw new Error('Search failed (' + res.status + ')');
         return res.json();
       })
       .then(function (data) {
+        if (data.error) throw new Error(data.error);
         if (!Array.isArray(data) || data.length === 0) {
           searchStatus.textContent = 'No courses found. Try a different name.';
           searchFallback.style.display = 'block';
@@ -1088,7 +1060,6 @@ select:focus-visible {
       })
       .catch(function (err) {
         if (err.name === 'AbortError') return;
-        // CSRF or network failure — show fallback
         searchStatus.className = 'search-status error';
         searchStatus.textContent = 'Course name search is currently unavailable.';
         searchFallback.style.display = 'block';
@@ -1140,7 +1111,7 @@ select:focus-visible {
   }
 
   function loadTeeData(courseId, name, detail) {
-    proxyFetch(NCRDB + '/courseTeeInfo?CourseID=' + courseId)
+    fetch(WORKER + '/tees?id=' + courseId)
       .then(function (res) {
         if (!res.ok) throw new Error('Could not load tee data');
         return res.text();
