@@ -991,19 +991,28 @@ select:focus-visible {
         var tees = parseTeeHtml(html);
         if (tees.length === 0) throw new Error('No tee data found');
 
-        // Extract course name from page if available
+        // Extract course name and location from the page HTML
         var courseName = name || 'Course ' + courseId;
         var courseLocation = detail || '';
 
-        // Parse course name from page HTML
         var parser = new DOMParser();
         var doc = parser.parseFromString(html, 'text/html');
-        var heading = doc.querySelector('h2, h3, .course-name, title');
-        if (heading) {
-          var hText = heading.textContent.trim();
-          // Format: "Name (ID) - City" or just the title
-          var nameMatch = hText.match(/^(.+?)\s*\(\d+\)/);
-          if (nameMatch) courseName = nameMatch[1].trim();
+
+        // NCRDB page has a header table with td.tableCellWidth for club name,
+        // followed by city and state cells
+        var nameCell = doc.querySelector('td.tableCellWidth');
+        if (nameCell) {
+          var extracted = nameCell.textContent.trim();
+          if (extracted) courseName = extracted;
+
+          // Get city and state from sibling cells
+          var row = nameCell.closest('tr');
+          if (row) {
+            var cells = row.querySelectorAll('td');
+            var city = cells.length > 1 ? cells[1].textContent.trim() : '';
+            var state = cells.length > 2 ? cells[2].textContent.trim() : '';
+            if (city || state) courseLocation = [city, state].filter(Boolean).join(', ');
+          }
         }
 
         // Store in cache
@@ -1020,7 +1029,7 @@ select:focus-visible {
         if (!existing) {
           var opt = document.createElement('option');
           opt.value = key;
-          opt.textContent = courseName;
+          opt.textContent = courseLocation ? courseName + ' — ' + courseLocation : courseName;
           // Insert before "Search" option
           var searchOpt = courseSelect.querySelector('option[value="search"]');
           courseSelect.insertBefore(opt, searchOpt);
