@@ -298,6 +298,22 @@ header p {
   justify-content: center;
 }
 
+.selected-course .sc-delete {
+  color: var(--red);
+}
+
+.selected-course .sc-default {
+  color: var(--gray-500);
+  font-size: 0.75rem;
+}
+
+.selected-course .sc-default.is-default {
+  color: var(--green-dark);
+  text-decoration: none;
+  cursor: default;
+  font-weight: 600;
+}
+
 #selected-course-display {
   display: none;
 }
@@ -711,6 +727,8 @@ select:focus-visible {
       <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
         <button type="button" class="sc-change" id="sc-change-btn" aria-label="Change course">Change</button>
         <button type="button" class="sc-change" id="sc-refresh-btn" aria-label="Refresh course data">Refresh</button>
+        <button type="button" class="sc-change sc-delete" id="sc-delete-btn" aria-label="Remove course from list">Delete</button>
+        <button type="button" class="sc-change sc-default" id="sc-default-btn" aria-label="Set as default course">Set Default</button>
       </div>
     </div>
 
@@ -854,6 +872,19 @@ select:focus-visible {
 
   // ===== localStorage Persistence =====
   var STORAGE_KEY = 'esr-saved-courses';
+  var DEFAULT_STORAGE_KEY = 'esr-default-course';
+
+  function getDefaultCourseKey() {
+    try {
+      return localStorage.getItem(DEFAULT_STORAGE_KEY) || 'usga-' + DEFAULT_COURSE_ID;
+    } catch (e) { return 'usga-' + DEFAULT_COURSE_ID; }
+  }
+
+  function setDefaultCourseKey(key) {
+    try {
+      localStorage.setItem(DEFAULT_STORAGE_KEY, key);
+    } catch (e) { /* storage unavailable */ }
+  }
 
   function saveCourses() {
     try {
@@ -907,6 +938,8 @@ select:focus-visible {
   var scDetail         = document.getElementById('sc-detail');
   var scChangeBtn      = document.getElementById('sc-change-btn');
   var scRefreshBtn     = document.getElementById('sc-refresh-btn');
+  var scDeleteBtn      = document.getElementById('sc-delete-btn');
+  var scDefaultBtn     = document.getElementById('sc-default-btn');
   var scUpdated        = document.getElementById('sc-updated');
 
   // ===== Course/Tee Logic =====
@@ -990,6 +1023,11 @@ select:focus-visible {
         scName.textContent = course.name;
         scDetail.textContent = course.location || '';
         scUpdated.textContent = course.updatedAt ? 'Updated ' + formatDate(course.updatedAt) : '';
+        // Update default button state
+        var isDefault = activeCourseId === getDefaultCourseKey();
+        scDefaultBtn.textContent = isDefault ? 'Default' : 'Set Default';
+        scDefaultBtn.classList.toggle('is-default', isDefault);
+        scDefaultBtn.disabled = isDefault;
         selectedDisplay.classList.add('show');
       }
     } else if (mode === 'manual') {
@@ -1239,9 +1277,61 @@ select:focus-visible {
     loadTeeData(courseId, null, null);
   });
 
+  // "Delete" button — remove course from saved list
+  scDeleteBtn.addEventListener('click', function () {
+    if (!activeCourseId) return;
+    var keyToDelete = activeCourseId;
+
+    // Remove from cache and localStorage
+    delete fetchedCourses[keyToDelete];
+    saveCourses();
+
+    // If deleted course was the default, reset default to Rocky Bayou
+    if (getDefaultCourseKey() === keyToDelete) {
+      setDefaultCourseKey('usga-' + DEFAULT_COURSE_ID);
+    }
+
+    // Remove dropdown option
+    var opt = courseSelect.querySelector('option[value="' + keyToDelete + '"]');
+    if (opt) opt.remove();
+
+    // Switch to another course: prefer the default, then first available, then search
+    var nextKey = getDefaultCourseKey();
+    if (!fetchedCourses[nextKey]) {
+      // Find first available course in dropdown
+      nextKey = null;
+      for (var k in fetchedCourses) {
+        if (fetchedCourses.hasOwnProperty(k)) { nextKey = k; break; }
+      }
+    }
+
+    if (nextKey && fetchedCourses[nextKey]) {
+      courseSelect.value = nextKey;
+      activeCourseId = nextKey;
+      setActiveCourse(nextKey);
+      updateUIForCourseMode('fetched');
+    } else {
+      // No courses left — show search panel
+      activeCourseId = null;
+      courseSelect.value = 'search';
+      updateUIForCourseMode('search');
+    }
+  });
+
+  // "Set Default" button — make current course the default on load
+  scDefaultBtn.addEventListener('click', function () {
+    if (!activeCourseId) return;
+    if (activeCourseId === getDefaultCourseKey()) return;
+    setDefaultCourseKey(activeCourseId);
+    // Update button to show it's now the default
+    scDefaultBtn.textContent = 'Default';
+    scDefaultBtn.classList.add('is-default');
+    scDefaultBtn.disabled = true;
+  });
+
   // Initialize — load saved courses from localStorage, then fetch default if needed
   loadSavedCourses();
-  var defaultKey = 'usga-' + DEFAULT_COURSE_ID;
+  var defaultKey = getDefaultCourseKey();
   if (fetchedCourses[defaultKey]) {
     // Use cached data — no network fetch needed
     courseSelect.value = defaultKey;
@@ -1249,7 +1339,9 @@ select:focus-visible {
     setActiveCourse(defaultKey);
     updateUIForCourseMode('fetched');
   } else {
-    loadTeeData(DEFAULT_COURSE_ID, null, null);
+    // Extract numeric ID from key (e.g. "usga-14208" -> "14208")
+    var initCourseId = defaultKey.replace(/^usga-/, '');
+    loadTeeData(initCourseId, null, null);
   }
 
   // ===== Pure Calculation Functions =====
@@ -1453,18 +1545,19 @@ select:focus-visible {
   });
 
   resetBtn.addEventListener('click', function () {
-    // Reset to default course (already cached from initial load)
-    var defaultKey = 'usga-' + DEFAULT_COURSE_ID;
-    if (fetchedCourses[defaultKey]) {
-      courseSelect.value = defaultKey;
-      activeCourseId = defaultKey;
-      setActiveCourse(defaultKey);
+    // Reset to user's default course
+    var resetKey = getDefaultCourseKey();
+    if (fetchedCourses[resetKey]) {
+      courseSelect.value = resetKey;
+      activeCourseId = resetKey;
+      setActiveCourse(resetKey);
       updateUIForCourseMode('fetched');
     } else {
       // If default wasn't loaded yet, reload it
+      var resetId = resetKey.replace(/^usga-/, '');
       courseSelect.value = 'search';
       updateUIForCourseMode('search');
-      loadTeeData(DEFAULT_COURSE_ID, null, null);
+      loadTeeData(resetId, null, null);
     }
 
     document.getElementById('handicapIndex').value = '';
