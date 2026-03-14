@@ -175,86 +175,57 @@ header p {
   margin-bottom: 12px;
 }
 
-/* ===== Search Panel ===== */
-#search-panel {
-  display: none;
-  margin-bottom: 16px;
-}
-
-#search-panel.show {
-  display: block;
-}
-
-.search-status {
-  font-size: 0.8125rem;
-  color: var(--gray-500);
-  padding: 4px 0;
-  min-height: 1.5em;
-}
-
-.search-status.error {
-  color: var(--red);
-}
-
-.search-fallback {
-  margin-top: 12px;
-  padding: 12px;
+/* ===== Manual Entry ===== */
+.manual-note {
+  margin-bottom: 12px;
+  padding: 10px 12px;
   background: var(--gray-50);
+  border: 1px solid var(--gray-200);
   border-radius: 8px;
   font-size: 0.8125rem;
   color: var(--gray-700);
   line-height: 1.5;
 }
 
-.search-fallback a {
+.manual-note a {
   color: var(--green-dark);
   font-weight: 600;
 }
 
-.search-fallback .id-row {
+.tb-row {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  justify-content: space-between;
   align-items: center;
-}
-
-.search-fallback .id-row input {
-  flex: 1;
-  padding: 8px 10px;
-  font-size: 0.875rem;
-  border: 1.5px solid var(--gray-200);
-  border-radius: 6px;
-  background: var(--white);
-}
-
-.search-fallback .id-row button {
-  padding: 8px 14px;
+  padding: 4px 8px;
+  background: var(--green-light);
+  border-radius: 5px;
+  margin-bottom: 3px;
   font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--white);
-  background: var(--green-dark);
+  color: var(--gray-700);
+}
+
+.tb-row button {
+  background: none;
   border: none;
-  border-radius: 6px;
   cursor: pointer;
-  white-space: nowrap;
-  min-height: 36px;
+  color: var(--gray-500);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 2px;
 }
 
-/* Loading spinner */
-.spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--gray-200);
-  border-top-color: var(--green-dark);
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-  vertical-align: middle;
-  margin-right: 6px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.btn-save-manual {
+  width: 100%;
+  padding: 10px;
+  margin-top: 2px;
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--green-dark);
+  background: var(--green-light);
+  border: 1.5px solid var(--green-mid);
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 /* Selected course badge */
@@ -410,6 +381,9 @@ header p {
 .no-esr .result-verdict { color: var(--green-dark); }
 .tier1 .result-verdict { color: var(--amber-border); }
 .tier2 .result-verdict { color: var(--red-border); }
+.stale .result-verdict { color: var(--gray-400); }
+.stale .result-subtitle { color: var(--gray-400); }
+.stale .stat-value { color: var(--gray-400); }
 
 .result-subtitle {
   font-size: 0.9375rem;
@@ -672,8 +646,7 @@ footer a {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #results-section.show,
-  .spinner {
+  #results-section.show {
     animation: none;
   }
 }
@@ -716,8 +689,7 @@ select:focus-visible {
     <div class="form-group">
       <label for="course">Golf Course</label>
       <select id="course">
-        <option value="search">Look up on USGA Database...</option>
-        <option value="other">Enter manually</option>
+        <option value="other">Enter course manually</option>
       </select>
     </div>
 
@@ -730,27 +702,43 @@ select:focus-visible {
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
         <button type="button" class="sc-change" id="sc-change-btn" aria-label="Change course">Change</button>
-        <button type="button" class="sc-change" id="sc-refresh-btn" aria-label="Refresh course data">Refresh</button>
+        <button type="button" class="sc-change" id="sc-edit-btn" aria-label="Edit course details">Edit</button>
         <button type="button" class="sc-change sc-delete" id="sc-delete-btn" aria-label="Remove course from list">Delete</button>
         <button type="button" class="sc-change sc-default" id="sc-default-btn" aria-label="Set as default course">Set Default</button>
       </div>
     </div>
 
-    <!-- Search Panel (shown when "Search USGA Database..." is selected) -->
-    <div id="search-panel">
-      <div class="search-fallback" id="search-fallback">
-        <strong>Look up your course on the USGA site:</strong>
-        <ol style="margin:8px 0 8px 20px;padding:0;font-size:0.8125rem;line-height:1.6">
-          <li>Open <a href="https://ncrdb.usga.org/NCRListing" target="_blank" rel="noopener">ncrdb.usga.org</a> and search for your course</li>
-          <li>Click your course, then copy the page URL or Course ID</li>
-          <li>Paste it below</li>
-        </ol>
-        <div class="id-row">
-          <input type="text" id="course-id-input" inputmode="numeric" placeholder="Paste URL or Course ID (e.g. 31622)" aria-label="Course ID or URL">
-          <button type="button" id="course-id-btn">Load</button>
-        </div>
+    <!-- Manual entry fields (shown when entering course data by hand) -->
+    <div id="manual-fields" style="display:none">
+      <div class="manual-note">
+        Look up Course Rating, Slope, and Par at
+        <a href="https://ncrdb.usga.org/NCRListing" target="_blank" rel="noopener">ncrdb.usga.org</a>,
+        then enter the values below.
       </div>
-      <div class="search-status" id="search-status"></div>
+      <div class="form-group">
+        <label for="manualCourseName">Course Name <span class="hint">(optional)</span></label>
+        <input type="text" id="manualCourseName" autocomplete="off" placeholder="e.g. Pebble Beach Golf Links">
+      </div>
+      <div class="form-group">
+        <label for="manualLocation">City, State <span class="hint">(optional)</span></label>
+        <input type="text" id="manualLocation" autocomplete="off" placeholder="e.g. Pebble Beach, CA">
+      </div>
+
+      <div style="border-top:1px solid var(--gray-200);padding-top:10px;margin-top:4px">
+        <div style="font-size:0.8125rem;font-weight:600;color:var(--gray-700);margin-bottom:6px">
+          Tees <span style="font-weight:400;color:var(--gray-500)">— add each tee, then Save Course</span>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="tbName" autocomplete="off" placeholder="Name (e.g. Blue)" style="flex:2;min-width:90px;padding:7px 8px;font-size:0.8125rem;border:1.5px solid var(--gray-200);border-radius:6px;background:var(--white)">
+          <input type="text" id="tbCR" inputmode="decimal" autocomplete="off" placeholder="CR" style="flex:1;min-width:60px;padding:7px 8px;font-size:0.8125rem;border:1.5px solid var(--gray-200);border-radius:6px;background:var(--white)">
+          <input type="text" id="tbSlope" inputmode="decimal" autocomplete="off" placeholder="Slope" style="flex:1;min-width:65px;padding:7px 8px;font-size:0.8125rem;border:1.5px solid var(--gray-200);border-radius:6px;background:var(--white)">
+          <input type="text" id="tbPar" inputmode="numeric" autocomplete="off" placeholder="Par" style="flex:0.7;min-width:38px;padding:7px 8px;font-size:0.8125rem;border:1.5px solid var(--gray-200);border-radius:6px;background:var(--white)">
+          <button type="button" id="add-tee-btn" style="flex-shrink:0;padding:7px 12px;font-size:0.8125rem;font-weight:700;color:var(--white);background:var(--green-mid);border:none;border-radius:6px;cursor:pointer;white-space:nowrap">+ Add</button>
+        </div>
+        <div id="tee-builder-list" style="margin-top:6px"></div>
+      </div>
+
+      <button type="button" class="btn-save-manual" id="save-manual-btn">Save Course for Future Use</button>
     </div>
 
     <div class="form-group" id="tee-group">
@@ -767,8 +755,8 @@ select:focus-visible {
     </div>
 
     <div class="form-group">
-      <label for="slopeRating">Slope Rating<span class="required">*</span> <span class="hint">(e.g. 128)</span></label>
-      <input type="text" id="slopeRating" inputmode="numeric" autocomplete="off" placeholder="55 to 155">
+      <label for="slopeRating">Slope Rating<span class="required">*</span> <span class="hint">(e.g. 128.0)</span></label>
+      <input type="text" id="slopeRating" inputmode="decimal" autocomplete="off" placeholder="55.0 to 155.0">
       <div class="error-msg" id="slopeRating-err"></div>
     </div>
 
@@ -877,15 +865,39 @@ select:focus-visible {
 (function () {
   'use strict';
 
-  // ===== CORS Proxy (for browser-side GET requests) =====
-  var PROXY = 'https://corsproxy.io/?';
-  var NCRDB = 'https://ncrdb.usga.org';
 
   // ===== Default Course =====
   var DEFAULT_COURSE_ID = '14208';  // Rocky Bayou CC, Niceville FL
 
-  // Cache for courses fetched from USGA
-  var fetchedCourses = {};
+  // Built-in tee data for Rocky Bayou CC (Course ID 14208) — always available as fallback
+  var BUILTIN_COURSES = {
+    'usga-14208': {
+      name: 'Rocky Bayou Country Club',
+      location: 'Niceville, FL',
+      defaultTee: 2,  // BLUE (Men's)
+      tees: [
+        { name: 'BLACK',      gender: 'M', par: 72, cr: 73.0, slope: 133, yards: 6901 },
+        { name: 'BLACK/BLUE', gender: 'M', par: 72, cr: 71.9, slope: 131, yards: 6700 },
+        { name: 'BLUE',       gender: 'M', par: 72, cr: 70.8, slope: 128, yards: 6408 },
+        { name: 'BLUE/WHITE', gender: 'M', par: 72, cr: 69.2, slope: 126, yards: 6174 },
+        { name: 'WHITE',      gender: 'M', par: 72, cr: 67.8, slope: 119, yards: 5903 },
+        { name: 'WHITE/GOLD', gender: 'M', par: 72, cr: 66.7, slope: 116, yards: 5673 },
+        { name: 'GOLD',       gender: 'M', par: 72, cr: 65.6, slope: 114, yards: 5421 },
+        { name: 'GOLD/RED',   gender: 'M', par: 72, cr: 64.2, slope: 109, yards: 5151 },
+        { name: 'RED',        gender: 'M', par: 72, cr: 63.6, slope: 100, yards: 4933 },
+        { name: 'TEAL',       gender: 'M', par: 72, cr: 60.3, slope: 95,  yards: 4135 },
+        { name: 'WHITE',      gender: 'F', par: 72, cr: 73.7, slope: 128, yards: 5903 },
+        { name: 'WHITE/GOLD', gender: 'F', par: 72, cr: 72.2, slope: 123, yards: 5673 },
+        { name: 'GOLD',       gender: 'F', par: 72, cr: 70.7, slope: 121, yards: 5421 },
+        { name: 'GOLD/RED',   gender: 'F', par: 72, cr: 69.0, slope: 119, yards: 5151 },
+        { name: 'RED',        gender: 'F', par: 72, cr: 68.1, slope: 114, yards: 4933 },
+        { name: 'TEAL',       gender: 'F', par: 72, cr: 63.6, slope: 105, yards: 4135 }
+      ]
+    }
+  };
+
+  // Cache for courses fetched from USGA — pre-seeded with Rocky Bayou built-in data
+  var fetchedCourses = Object.assign({}, BUILTIN_COURSES);
 
   // ===== localStorage Persistence =====
   var STORAGE_KEY = 'esr-saved-courses';
@@ -924,18 +936,23 @@ select:focus-visible {
           opt.value = key;
           var c = saved[key];
           opt.textContent = c.location ? c.name + ' — ' + c.location : c.name;
-          var searchOpt = courseSelect.querySelector('option[value="search"]');
-          courseSelect.insertBefore(opt, searchOpt);
+          var otherOpt = courseSelect.querySelector('option[value="other"]');
+          courseSelect.insertBefore(opt, otherOpt);
         }
       }
     } catch (e) { /* corrupt data or unavailable */ }
   }
 
-  function formatDate(isoString) {
+  function formatDateTime(isoString) {
     if (!isoString) return '';
     var d = new Date(isoString);
     if (isNaN(d.getTime())) return '';
-    return (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+    var date = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+    var h = d.getHours(), m = d.getMinutes();
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    var time = h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+    return date + ' ' + time;
   }
 
   // ===== DOM References =====
@@ -946,16 +963,24 @@ select:focus-visible {
   var crInput          = document.getElementById('courseRating');
   var slopeInput       = document.getElementById('slopeRating');
   var parInput         = document.getElementById('par');
-  var searchPanel      = document.getElementById('search-panel');
-  var searchStatus     = document.getElementById('search-status');
-  var courseIdInput     = document.getElementById('course-id-input');
-  var courseIdBtn       = document.getElementById('course-id-btn');
+  var manualFields     = document.getElementById('manual-fields');
+  var manualCourseName = document.getElementById('manualCourseName');
+  var manualLocation   = document.getElementById('manualLocation');
+  var saveManualBtn    = document.getElementById('save-manual-btn');
+  var tbName           = document.getElementById('tbName');
+  var tbCR             = document.getElementById('tbCR');
+  var tbSlope          = document.getElementById('tbSlope');
+  var tbPar            = document.getElementById('tbPar');
+  var addTeeBtn        = document.getElementById('add-tee-btn');
+  var teeBuilderList   = document.getElementById('tee-builder-list');
+  var manualTeesList   = [];  // tees accumulated in the builder
   var selectedDisplay  = document.getElementById('selected-course-display');
   var scName           = document.getElementById('sc-name');
   var scDetail         = document.getElementById('sc-detail');
   var scChangeBtn      = document.getElementById('sc-change-btn');
-  var scRefreshBtn     = document.getElementById('sc-refresh-btn');
+  var scEditBtn        = document.getElementById('sc-edit-btn');
   var scDeleteBtn      = document.getElementById('sc-delete-btn');
+  var editingCourseKey = null;  // set when editing an existing course
   var scDefaultBtn     = document.getElementById('sc-default-btn');
   var scUpdated        = document.getElementById('sc-updated');
 
@@ -975,7 +1000,7 @@ select:focus-visible {
       opt.value = i;
       var label = t.name;
       if (t.gender) label += ' (' + t.gender + ')';
-      label += '  —  ' + t.cr.toFixed(1) + ' / ' + t.slope;
+      label += '  —  ' + t.cr.toFixed(1) + ' / ' + (+t.slope).toFixed(1);
       if (t.yards) label += '  —  ' + t.yards.toLocaleString() + ' yds';
       opt.textContent = label;
       teeSelect.appendChild(opt);
@@ -1002,7 +1027,7 @@ select:focus-visible {
     if (!tee) return;
 
     crInput.value = tee.cr.toFixed(1);
-    slopeInput.value = tee.slope;
+    slopeInput.value = (+tee.slope).toFixed(1);
     parInput.value = tee.par;
     crInput.readOnly = true;
     slopeInput.readOnly = true;
@@ -1019,28 +1044,17 @@ select:focus-visible {
   }
 
   function updateUIForCourseMode(mode) {
-    // mode: 'search' | 'fetched' | 'manual'
-    searchPanel.classList.remove('show');
+    // mode: 'fetched' | 'manual'
+    manualFields.style.display = 'none';
     selectedDisplay.classList.remove('show');
     teeGroup.style.display = '';
 
-    if (mode === 'search') {
-      searchPanel.classList.add('show');
-      teeGroup.style.display = 'none';
-      crInput.readOnly = false;
-      slopeInput.readOnly = false;
-      parInput.readOnly = false;
-      crInput.value = '';
-      slopeInput.value = '';
-      parInput.value = '';
-      teeSelect.innerHTML = '';
-      courseIdInput.focus();
-    } else if (mode === 'fetched') {
+    if (mode === 'fetched') {
       var course = getCourseData(activeCourseId);
       if (course) {
         scName.textContent = course.name;
         scDetail.textContent = course.location || '';
-        scUpdated.textContent = course.updatedAt ? 'Updated ' + formatDate(course.updatedAt) : '';
+        scUpdated.textContent = course.updatedAt ? 'Current as of ' + formatDateTime(course.updatedAt) : 'Built-in data — tap Refresh to verify';
         // Update default button state
         var isDefault = activeCourseId === getDefaultCourseKey();
         scDefaultBtn.textContent = isDefault ? 'Default' : 'Set Default';
@@ -1049,190 +1063,35 @@ select:focus-visible {
         selectedDisplay.classList.add('show');
       }
     } else if (mode === 'manual') {
+      manualFields.style.display = 'block';
       teeGroup.style.display = 'none';
       crInput.readOnly = false;
       slopeInput.readOnly = false;
       parInput.readOnly = false;
-      crInput.value = '';
-      slopeInput.value = '';
-      parInput.value = '';
+      // Only clear fields when opening fresh (not when Edit pre-fills them)
+      if (!editingCourseKey) {
+        crInput.value = '';
+        slopeInput.value = '';
+        parInput.value = '';
+        manualCourseName.value = '';
+        manualLocation.value = '';
+        manualTeesList = [];
+        tbName.value = ''; tbCR.value = ''; tbSlope.value = ''; tbPar.value = '';
+        teeBuilderList.innerHTML = '';
+        saveManualBtn.textContent = 'Save Course for Future Use';
+      }
       teeSelect.innerHTML = '';
     }
     // 'fetched' default — show tee selector and selected course badge
   }
 
-  // ===== USGA NCRDB Fetch Functions =====
-
-  function proxyFetch(url, options) {
-    var proxyUrl = PROXY + encodeURIComponent(url);
-    options = options || {};
-    return fetch(proxyUrl, options);
-  }
-
-  function loadTeeData(courseId, name, detail) {
-    proxyFetch(NCRDB + '/courseTeeInfo?CourseID=' + courseId)
-      .then(function (res) {
-        if (!res.ok) throw new Error('Could not load tee data');
-        return res.text();
-      })
-      .then(function (html) {
-        var tees = parseTeeHtml(html);
-        if (tees.length === 0) throw new Error('No tee data found');
-
-        // Extract course name and location from the page HTML
-        var courseName = name || 'Course ' + courseId;
-        var courseLocation = detail || '';
-
-        var parser = new DOMParser();
-        var doc = parser.parseFromString(html, 'text/html');
-
-        // NCRDB page has a header table with td.tableCellWidth for club name,
-        // followed by city and state cells
-        var nameCell = doc.querySelector('td.tableCellWidth');
-        if (nameCell) {
-          var extracted = nameCell.textContent.trim();
-          if (extracted) courseName = extracted;
-
-          // Get city and state from sibling cells
-          var row = nameCell.closest('tr');
-          if (row) {
-            var cells = row.querySelectorAll('td');
-            var city = cells.length > 1 ? cells[1].textContent.trim() : '';
-            var state = cells.length > 2 ? cells[2].textContent.trim() : '';
-            if (city || state) courseLocation = [city, state].filter(Boolean).join(', ');
-          }
-        }
-
-        // Pick default tee: prefer "Blue" if available, else first
-        var defaultTee = 0;
-        for (var ti = 0; ti < tees.length; ti++) {
-          if (/^blue$/i.test(tees[ti].name)) { defaultTee = ti; break; }
-        }
-
-        // Store in cache with timestamp
-        var key = 'usga-' + courseId;
-        fetchedCourses[key] = {
-          name: courseName,
-          location: courseLocation,
-          tees: tees,
-          defaultTee: defaultTee,
-          updatedAt: new Date().toISOString()
-        };
-        saveCourses();
-
-        // Add to dropdown if not already there
-        var existing = courseSelect.querySelector('option[value="' + key + '"]');
-        if (!existing) {
-          var opt = document.createElement('option');
-          opt.value = key;
-          opt.textContent = courseLocation ? courseName + ' — ' + courseLocation : courseName;
-          // Insert before "Search" option
-          var searchOpt = courseSelect.querySelector('option[value="search"]');
-          courseSelect.insertBefore(opt, searchOpt);
-        } else {
-          // Update existing option text in case name/location changed
-          existing.textContent = courseLocation ? courseName + ' — ' + courseLocation : courseName;
-        }
-
-        // Select the new course
-        courseSelect.value = key;
-        activeCourseId = key;
-        setActiveCourse(key);
-        updateUIForCourseMode('fetched');
-        clearErrors();
-      })
-      .catch(function (err) {
-        searchStatus.className = 'search-status error';
-        searchStatus.textContent = 'Could not load tee data: ' + err.message;
-      });
-  }
-
-  function parseTeeHtml(html) {
-    var parser = new DOMParser();
-    var doc = parser.parseFromString(html, 'text/html');
-    var table = doc.getElementById('gvCourses');
-    if (!table) {
-      // Fallback: find any table with tee data
-      var tables = doc.querySelectorAll('table');
-      for (var t = 0; t < tables.length; t++) {
-        var th = tables[t].querySelector('th');
-        if (th && /tee|rating|slope/i.test(tables[t].textContent)) {
-          table = tables[t];
-          break;
-        }
-      }
-    }
-    if (!table) return [];
-
-    // Find column indices from headers
-    var headers = table.querySelectorAll('thead th, thead td, tr:first-child th, tr:first-child td');
-    var colMap = {};
-    for (var h = 0; h < headers.length; h++) {
-      var txt = headers[h].textContent.trim().toLowerCase();
-      if (/tee\s*name/i.test(txt) || (h === 0 && /tee/i.test(txt))) colMap.name = h;
-      else if (/gender/i.test(txt)) colMap.gender = h;
-      else if (/^par$/i.test(txt)) colMap.par = h;
-      else if (/course\s*rating/i.test(txt)) colMap.cr = h;
-      else if (/^slope\s*rating/i.test(txt)) colMap.slope = h;
-      else if (/^length$/i.test(txt)) colMap.length = h;
-    }
-
-    // Fallback: assume standard NCRDB column order
-    if (colMap.name == null) colMap.name = 0;
-    if (colMap.gender == null) colMap.gender = 1;
-    if (colMap.par == null) colMap.par = 2;
-    if (colMap.cr == null) colMap.cr = 3;
-    if (colMap.slope == null) colMap.slope = 5;
-    if (colMap.length == null) colMap.length = 15;
-
-    // Parse data rows
-    var rows = table.querySelectorAll('tbody tr');
-    if (rows.length === 0) {
-      // No tbody — skip first row (header) and use remaining
-      rows = table.querySelectorAll('tr');
-      rows = Array.prototype.slice.call(rows, 1);
-    }
-
-    var tees = [];
-    for (var r = 0; r < rows.length; r++) {
-      var cells = rows[r].querySelectorAll('td');
-      if (cells.length < 6) continue;
-
-      var teeName = (cells[colMap.name] || {}).textContent || '';
-      teeName = teeName.trim();
-      if (!teeName) continue;
-
-      var gender = (cells[colMap.gender] || {}).textContent || '';
-      gender = gender.trim().toUpperCase();
-
-      var par = parseInt((cells[colMap.par] || {}).textContent, 10);
-      var cr  = parseFloat((cells[colMap.cr] || {}).textContent);
-      var slope = parseInt((cells[colMap.slope] || {}).textContent, 10);
-      var yards = parseInt((cells[colMap.length] || {}).textContent, 10);
-
-      if (isNaN(par) || isNaN(cr) || isNaN(slope)) continue;
-
-      tees.push({
-        name: teeName,
-        gender: gender || null,
-        cr: cr,
-        slope: slope,
-        par: par,
-        yards: isNaN(yards) ? null : yards
-      });
-    }
-
-    return tees;
-  }
 
   // ===== Event Handlers: Course Selection =====
 
   courseSelect.addEventListener('change', function () {
     var val = this.value;
 
-    if (val === 'search') {
-      updateUIForCourseMode('search');
-    } else if (val === 'other') {
+    if (val === 'other') {
       activeCourseId = null;
       updateUIForCourseMode('manual');
     } else {
@@ -1240,63 +1099,125 @@ select:focus-visible {
       setActiveCourse(val);
       updateUIForCourseMode('fetched');
     }
+    clearResults();
     clearErrors();
   });
 
   teeSelect.addEventListener('change', function () {
     if (activeCourseId) applyTeeData(activeCourseId);
+    clearResults();
     clearErrors();
   });
 
-  // Course ID direct lookup — supports pasted URLs or plain IDs
-  function extractCourseId(input) {
-    input = input.trim();
-    // Try to extract CourseID from a URL like ncrdb.usga.org/...?CourseID=31622
-    var urlMatch = input.match(/CourseID[=:](\d+)/i);
-    if (urlMatch) return urlMatch[1];
-    // Also match ncrdb.usga.org/NCRCourse/... pattern
-    var pathMatch = input.match(/NCRCourse\/(\d+)/i);
-    if (pathMatch) return pathMatch[1];
-    // Plain number
-    if (/^\d+$/.test(input)) return input;
-    return null;
-  }
 
-  courseIdBtn.addEventListener('click', function () {
-    var raw = courseIdInput.value.trim();
-    var id = extractCourseId(raw);
-    if (!id) {
-      courseIdInput.classList.add('input-error');
-      return;
-    }
-    courseIdInput.classList.remove('input-error');
-    searchStatus.innerHTML = '<span class="spinner"></span>Loading tee data...';
-    loadTeeData(id, null, null);
-  });
-
-  courseIdInput.addEventListener('input', function () {
-    this.classList.remove('input-error');
-  });
-
-  courseIdInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      courseIdBtn.click();
-    }
-  });
 
   // "Change" button on selected course badge
   scChangeBtn.addEventListener('click', function () {
-    courseSelect.value = 'search';
-    updateUIForCourseMode('search');
+    editingCourseKey = null;
+    activeCourseId = null;
+    courseSelect.value = 'other';
+    updateUIForCourseMode('manual');
   });
 
-  // "Refresh" button — re-fetch current course from USGA
-  scRefreshBtn.addEventListener('click', function () {
+  // "Edit" button — pre-fill manual fields with current course data for correction
+  scEditBtn.addEventListener('click', function () {
     if (!activeCourseId) return;
-    var courseId = activeCourseId.replace(/^usga-/, '');
-    searchStatus.innerHTML = '<span class="spinner"></span>Refreshing course data...';
-    loadTeeData(courseId, null, null);
+    var course = fetchedCourses[activeCourseId];
+    if (!course) return;
+    editingCourseKey = activeCourseId;
+    // Pre-populate tee list from all existing tees
+    manualTeesList = (course.tees || []).map(function (t) {
+      return { name: t.name, cr: t.cr, slope: t.slope, par: t.par };
+    });
+    updateUIForCourseMode('manual');
+    // Pre-populate course-level fields
+    manualCourseName.value = course.name || '';
+    manualLocation.value = course.location || '';
+    renderTeeBuilderList();
+    saveManualBtn.textContent = 'Update Course';
+  });
+
+
+  function renderTeeBuilderList() {
+    teeBuilderList.innerHTML = '';
+    manualTeesList.forEach(function (t, idx) {
+      var row = document.createElement('div');
+      row.className = 'tb-row';
+      row.innerHTML = '<span>' + t.name + ' &mdash; ' + t.cr.toFixed(1) + ' / ' + t.slope.toFixed(1) + ' / ' + t.par + '</span>';
+      var rm = document.createElement('button');
+      rm.type = 'button';
+      rm.textContent = '×';
+      rm.setAttribute('aria-label', 'Remove ' + t.name + ' tee');
+      rm.addEventListener('click', function () {
+        manualTeesList.splice(idx, 1);
+        renderTeeBuilderList();
+      });
+      row.appendChild(rm);
+      teeBuilderList.appendChild(row);
+    });
+  }
+
+  addTeeBtn.addEventListener('click', function () {
+    var name  = tbName.value.trim();
+    var cr    = parseFloat(tbCR.value);
+    var slope = parseFloat(tbSlope.value);
+    var par   = parseInt(tbPar.value, 10);
+    if (!name || isNaN(cr) || isNaN(slope) || isNaN(par)) {
+      alert('Enter tee name, CR, Slope, and Par before adding.');
+      return;
+    }
+    manualTeesList.push({ name: name, cr: cr, slope: slope, par: par });
+    renderTeeBuilderList();
+    tbName.value = ''; tbCR.value = ''; tbSlope.value = ''; tbPar.value = '';
+    tbName.focus();
+  });
+
+  // "Save Course" / "Update Course" button
+  saveManualBtn.addEventListener('click', function () {
+    // Build tee list: use accumulated list, or try to add current builder row implicitly
+    var tees = manualTeesList.slice();
+    if (tees.length === 0) {
+      var n = tbName.value.trim(), c = parseFloat(tbCR.value), s = parseFloat(tbSlope.value), p = parseInt(tbPar.value, 10);
+      if (!n || isNaN(c) || isNaN(s) || isNaN(p)) {
+        alert('Add at least one tee before saving.');
+        return;
+      }
+      tees.push({ name: n, cr: c, slope: s, par: p });
+    }
+    var name     = manualCourseName.value.trim() || 'Manual Entry';
+    var location = manualLocation.value.trim();
+    var key      = editingCourseKey || ('manual-' + Date.now());
+
+    fetchedCourses[key] = {
+      name: name,
+      location: location,
+      defaultTee: 0,
+      tees: tees.map(function (t) { return { name: t.name, gender: null, par: t.par, cr: t.cr, slope: t.slope, yards: null }; }),
+      updatedAt: new Date().toISOString()
+    };
+    saveCourses();
+
+    // Update or add dropdown option
+    var existing = courseSelect.querySelector('option[value="' + key + '"]');
+    if (existing) {
+      existing.textContent = location ? name + ' — ' + location : name;
+    } else {
+      var opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = location ? name + ' — ' + location : name;
+      courseSelect.insertBefore(opt, courseSelect.querySelector('option[value="other"]'));
+    }
+
+    editingCourseKey = null;
+    manualTeesList = [];
+    renderTeeBuilderList();
+    tbName.value = ''; tbCR.value = ''; tbSlope.value = ''; tbPar.value = '';
+    saveManualBtn.textContent = 'Save Course for Future Use';
+    courseSelect.value = key;
+    activeCourseId = key;
+    setActiveCourse(key);
+    updateUIForCourseMode('fetched');
+    clearErrors();
   });
 
   // "Delete" button — remove course from saved list
@@ -1354,17 +1275,13 @@ select:focus-visible {
   // Initialize — load saved courses from localStorage, then fetch default if needed
   loadSavedCourses();
   var defaultKey = getDefaultCourseKey();
-  if (fetchedCourses[defaultKey]) {
-    // Use cached data — no network fetch needed
-    courseSelect.value = defaultKey;
-    activeCourseId = defaultKey;
-    setActiveCourse(defaultKey);
-    updateUIForCourseMode('fetched');
-  } else {
-    // Extract numeric ID from key (e.g. "usga-14208" -> "14208")
-    var initCourseId = defaultKey.replace(/^usga-/, '');
-    loadTeeData(initCourseId, null, null);
-  }
+  // Always show the default course immediately (built-in data guarantees Rocky Bayou is available;
+  // localStorage may override with fresher USGA data from a previous session)
+  courseSelect.value = defaultKey;
+  activeCourseId = defaultKey;
+  setActiveCourse(defaultKey);
+  updateUIForCourseMode('fetched');
+
 
   // ===== Pure Calculation Functions =====
 
@@ -1399,7 +1316,7 @@ select:focus-visible {
   var fields = [
     { id: 'handicapIndex', label: 'Handicap Index', min: -10, max: 54, decimal: true },
     { id: 'courseRating',  label: 'Course Rating',  min: 55,  max: 85, decimal: true },
-    { id: 'slopeRating',  label: 'Slope Rating',   min: 55,  max: 155, decimal: false },
+    { id: 'slopeRating',  label: 'Slope Rating',   min: 55,  max: 155, decimal: true },
     { id: 'par',           label: 'Par',             min: 54,  max: 80,  decimal: false },
     { id: 'adjGrossScore', label: 'Adj. Gross Score', min: 40,  max: 200, decimal: false }
   ];
@@ -1465,6 +1382,20 @@ select:focus-visible {
   }
 
   // ===== Result Rendering =====
+
+  function clearResults() {
+    var section = document.getElementById('results-section');
+    if (!section.classList.contains('show')) return; // nothing to clear
+    var card = document.getElementById('result-card');
+    card.className = 'result-card stale';
+    document.getElementById('result-verdict').textContent = '— —';
+    document.getElementById('result-subtitle').textContent = 'Course or tee changed — press Calculate ESR to update.';
+    document.getElementById('result-stats').innerHTML =
+      '<div class="result-stat"><div class="stat-value">—</div><div class="stat-label">Differential</div></div>' +
+      '<div class="result-stat"><div class="stat-value">—</div><div class="stat-label">Course Hcp</div></div>' +
+      '<div class="result-stat"><div class="stat-value">—</div><div class="stat-label">HI - Diff</div></div>';
+    document.getElementById('ref-tbody').innerHTML = '';
+  }
 
   function renderResult(vals) {
     var hi = vals.handicapIndex;
@@ -1575,18 +1506,14 @@ select:focus-visible {
       setActiveCourse(resetKey);
       updateUIForCourseMode('fetched');
     } else {
-      // If default wasn't loaded yet, reload it
-      var resetId = resetKey.replace(/^usga-/, '');
-      courseSelect.value = 'search';
-      updateUIForCourseMode('search');
-      loadTeeData(resetId, null, null);
+      // Default course not cached — switch to manual entry
+      activeCourseId = null;
+      courseSelect.value = 'other';
+      updateUIForCourseMode('manual');
     }
 
     document.getElementById('handicapIndex').value = '';
     document.getElementById('adjGrossScore').value = '';
-
-    searchStatus.textContent = '';
-    courseIdInput.value = '';
 
     clearErrors();
     document.getElementById('results-section').classList.remove('show');
