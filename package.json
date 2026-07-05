@@ -1,0 +1,16 @@
+{
+  "name": "esr-ghin-analysis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "sync:courses": "node scripts/update-courses.js",
+    "refresh:rocky": "node scripts/update-courses.js --course-id 14208 --name \"Rocky Bayou Country Club\" --location \"Niceville, FL\" --default-tee 2",
+    "publish:courses": "node scripts/update-courses.js --push",
+    "test": "npm run sync:courses"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
