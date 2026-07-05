@@ -5,7 +5,7 @@
     "usga-14208": {
       "name": "Rocky Bayou Country Club",
       "location": "Niceville, FL",
-      "defaultTee": 3,
+      "defaultTee": 2,
       "tees": [
         { "name": "BLACK", "gender": "M", "par": 72, "cr": 73.1, "slope": 136, "yards": 6901 },
         { "name": "BLACK/BLUE", "gender": "M", "par": 72, "cr": 71.9, "slope": 132, "yards": 6668 },

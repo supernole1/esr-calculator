@@ -875,7 +875,7 @@ select:focus-visible {
     "usga-14208": {
       "name": "Rocky Bayou Country Club",
       "location": "Niceville, FL",
-      "defaultTee": 3,
+      "defaultTee": 2,
       "tees": [
         {
           "name": "BLACK",
@@ -1044,16 +1044,7 @@ select:focus-visible {
         if (!saved.hasOwnProperty(key)) continue;
         if (BUILTIN_COURSES[key]) continue;
         fetchedCourses[key] = saved[key];
-        // Add to dropdown
-        var existing = courseSelect.querySelector('option[value="' + key + '"]');
-        if (!existing) {
-          var opt = document.createElement('option');
-          opt.value = key;
-          var c = saved[key];
-          opt.textContent = c.location ? c.name + ' — ' + c.location : c.name;
-          var otherOpt = courseSelect.querySelector('option[value="other"]');
-          courseSelect.insertBefore(opt, otherOpt);
-        }
+        upsertCourseOption(key, saved[key]);
       }
     } catch (e) { /* corrupt data or unavailable */ }
   }
@@ -1100,6 +1091,28 @@ select:focus-visible {
   var scUpdated        = document.getElementById('sc-updated');
 
   // ===== Course/Tee Logic =====
+
+  function upsertCourseOption(key, course) {
+    var existing = courseSelect.querySelector('option[value="' + key + '"]');
+    var label = course.location ? course.name + ' — ' + course.location : course.name;
+
+    if (existing) {
+      existing.textContent = label;
+      return;
+    }
+
+    var opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = label;
+    courseSelect.insertBefore(opt, courseSelect.querySelector('option[value="other"]'));
+  }
+
+  function loadCourseOptions() {
+    for (var key in fetchedCourses) {
+      if (!fetchedCourses.hasOwnProperty(key)) continue;
+      upsertCourseOption(key, fetchedCourses[key]);
+    }
+  }
 
   function getCourseData(courseId) {
     return fetchedCourses[courseId] || null;
@@ -1312,16 +1325,7 @@ select:focus-visible {
     };
     saveCourses();
 
-    // Update or add dropdown option
-    var existing = courseSelect.querySelector('option[value="' + key + '"]');
-    if (existing) {
-      existing.textContent = location ? name + ' — ' + location : name;
-    } else {
-      var opt = document.createElement('option');
-      opt.value = key;
-      opt.textContent = location ? name + ' — ' + location : name;
-      courseSelect.insertBefore(opt, courseSelect.querySelector('option[value="other"]'));
-    }
+    upsertCourseOption(key, fetchedCourses[key]);
 
     editingCourseKey = null;
     manualTeesList = [];
@@ -1387,11 +1391,16 @@ select:focus-visible {
     scDefaultBtn.disabled = true;
   });
 
-  // Initialize — load saved courses from localStorage, then fetch default if needed
+  // Initialize — load built-in courses first, then any user-saved courses.
+  loadCourseOptions();
   loadSavedCourses();
   var defaultKey = getDefaultCourseKey();
   // Always show the default course immediately (built-in data guarantees Rocky Bayou is available;
-  // localStorage may override with fresher USGA data from a previous session)
+  // localStorage may add user-saved courses from a previous session)
+  if (!fetchedCourses[defaultKey]) {
+    defaultKey = 'usga-' + DEFAULT_COURSE_ID;
+    setDefaultCourseKey(defaultKey);
+  }
   courseSelect.value = defaultKey;
   activeCourseId = defaultKey;
   setActiveCourse(defaultKey);
