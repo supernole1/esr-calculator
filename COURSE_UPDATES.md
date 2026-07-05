@@ -11,6 +11,8 @@ npm run sync:courses
 ```
 
 Regenerates the embedded course data in `index.html` from `data/courses.json`.
+Built-in courses from `data/courses.json` take priority over any older copy
+saved in browser localStorage.
 
 ```powershell
 npm run refresh:rocky

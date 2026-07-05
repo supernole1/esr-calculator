@@ -875,14 +875,14 @@ select:focus-visible {
     "usga-14208": {
       "name": "Rocky Bayou Country Club",
       "location": "Niceville, FL",
-      "defaultTee": 2,
+      "defaultTee": 3,
       "tees": [
         {
           "name": "BLACK",
           "gender": "M",
           "par": 72,
-          "cr": 73,
-          "slope": 133,
+          "cr": 73.1,
+          "slope": 136,
           "yards": 6901
         },
         {
@@ -890,22 +890,22 @@ select:focus-visible {
           "gender": "M",
           "par": 72,
           "cr": 71.9,
-          "slope": 131,
-          "yards": 6700
+          "slope": 132,
+          "yards": 6668
         },
         {
           "name": "BLUE",
           "gender": "M",
           "par": 72,
-          "cr": 70.8,
-          "slope": 128,
+          "cr": 70.6,
+          "slope": 129,
           "yards": 6408
         },
         {
           "name": "BLUE/WHITE",
           "gender": "M",
           "par": 72,
-          "cr": 69.2,
+          "cr": 69.5,
           "slope": 126,
           "yards": 6174
         },
@@ -913,48 +913,48 @@ select:focus-visible {
           "name": "WHITE",
           "gender": "M",
           "par": 72,
-          "cr": 67.8,
-          "slope": 119,
+          "cr": 68.2,
+          "slope": 124,
           "yards": 5903
         },
         {
           "name": "WHITE/GOLD",
           "gender": "M",
           "par": 72,
-          "cr": 66.7,
-          "slope": 116,
-          "yards": 5673
+          "cr": 67.4,
+          "slope": 119,
+          "yards": 5718
         },
         {
           "name": "GOLD",
           "gender": "M",
           "par": 72,
-          "cr": 65.6,
+          "cr": 66.3,
           "slope": 114,
-          "yards": 5421
+          "yards": 5466
         },
         {
           "name": "GOLD/RED",
           "gender": "M",
           "par": 72,
-          "cr": 64.2,
-          "slope": 109,
+          "cr": 65,
+          "slope": 112,
           "yards": 5151
         },
         {
           "name": "RED",
           "gender": "M",
           "par": 72,
-          "cr": 63.6,
-          "slope": 100,
+          "cr": 63.7,
+          "slope": 111,
           "yards": 4933
         },
         {
           "name": "TEAL",
           "gender": "M",
           "par": 72,
-          "cr": 60.3,
-          "slope": 95,
+          "cr": 60.4,
+          "slope": 101,
           "yards": 4135
         },
         {
@@ -1042,6 +1042,7 @@ select:focus-visible {
       var saved = JSON.parse(raw);
       for (var key in saved) {
         if (!saved.hasOwnProperty(key)) continue;
+        if (BUILTIN_COURSES[key]) continue;
         fetchedCourses[key] = saved[key];
         // Add to dropdown
         var existing = courseSelect.querySelector('option[value="' + key + '"]');
