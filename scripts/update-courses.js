@@ -231,7 +231,7 @@ function git(args) {
 }
 
 function publish() {
-  const files = ['index.html', 'data/courses.json', 'package.json', 'scripts/update-courses.js', 'COURSE_UPDATES.md'];
+  const files = ['index.html', 'data/courses.json', 'package.json', 'scripts/update-courses.js', 'scripts/serve-local.js', 'COURSE_UPDATES.md'];
   git(['add', ...files]);
   const staged = git(['diff', '--cached', '--name-only']);
   if (!staged) {

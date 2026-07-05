@@ -7,6 +7,7 @@
     "sync:courses": "node scripts/update-courses.js",
     "refresh:rocky": "node scripts/update-courses.js --course-id 14208 --name \"Rocky Bayou Country Club\" --location \"Niceville, FL\" --default-tee 2",
     "publish:courses": "node scripts/update-courses.js --push",
+    "serve": "node scripts/serve-local.js",
     "test": "npm run sync:courses"
   },
   "keywords": [],
